@@ -17,7 +17,7 @@ import {
   Tag,
   Upload,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import './App.css';
 import { isPossibleDuplicate, parseBusinessCard } from './lib/contactParser';
 import { preprocessImage } from './lib/imageProcessing';
@@ -132,6 +132,9 @@ function StatusPill({ contact, duplicate }: { contact: Contact; duplicate: boole
 }
 
 export default function App() {
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const contactsRef = useRef<HTMLDivElement>(null);
   const [contacts, setContacts] = useState<Contact[]>(() => {
     const saved = loadContacts();
     return saved.length > 0 ? saved : SAMPLE_CONTACTS;
@@ -161,6 +164,22 @@ export default function App() {
 
   function updateDraft<Key extends keyof Contact>(key: Key, value: Contact[Key]) {
     setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function triggerCamera() {
+    cameraInputRef.current?.click();
+  }
+
+  function triggerUpload() {
+    uploadInputRef.current?.click();
+  }
+
+  function showContacts() {
+    contactsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handleSelectedFile(file: File | undefined) {
+    if (file) void readBusinessCard(file);
   }
 
   async function readBusinessCard(file: File) {
@@ -236,6 +255,27 @@ export default function App() {
 
   return (
     <main className="app-shell">
+      <input
+        ref={cameraInputRef}
+        className="file-input"
+        accept="image/*"
+        capture="environment"
+        type="file"
+        onChange={(event) => {
+          handleSelectedFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
+      <input
+        ref={uploadInputRef}
+        className="file-input"
+        accept="image/*"
+        type="file"
+        onChange={(event) => {
+          handleSelectedFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
       <header className="topbar">
         <div className="brand">
           <span className="brand-mark">
@@ -252,15 +292,15 @@ export default function App() {
       </header>
 
       <nav className="mode-tabs" aria-label="주요 기능">
-        <button className="active" type="button">
+        <button className="active" type="button" onClick={triggerCamera}>
           <Camera size={17} />
           스캔
         </button>
-        <button type="button">
+        <button type="button" onClick={triggerUpload}>
           <Upload size={17} />
           업로드
         </button>
-        <button type="button">
+        <button type="button" onClick={showContacts}>
           <Users size={17} />
           최근
         </button>
@@ -276,16 +316,7 @@ export default function App() {
             <StatusPill contact={draft} duplicate={duplicate} />
           </div>
 
-          <label className="dropzone">
-            <input
-              accept="image/*"
-              capture="environment"
-              type="file"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void readBusinessCard(file);
-              }}
-            />
+          <div className="dropzone">
             <div className="preview-frame">
               {imageUrl ? <img src={imageUrl} alt="업로드된 명함" /> : <FileImage size={52} />}
             </div>
@@ -293,11 +324,17 @@ export default function App() {
               <strong>명함 사진 선택 또는 촬영</strong>
               <span>한국어, 영어, 베트남어 OCR 언어팩을 사용합니다.</span>
             </div>
-            <span className="button-like">
-              <Upload size={16} />
-              이미지 넣기
-            </span>
-          </label>
+            <div className="dropzone-actions">
+              <button className="button-like" type="button" onClick={triggerCamera}>
+                <Camera size={16} />
+                스캔
+              </button>
+              <button className="secondary-button compact-button" type="button" onClick={triggerUpload}>
+                <Upload size={16} />
+                업로드
+              </button>
+            </div>
+          </div>
 
           <div className="ocr-meter">
             <div>
@@ -375,7 +412,7 @@ export default function App() {
             <textarea value={sourceText} onChange={(event) => setSourceText(event.target.value)} />
           </div>
 
-          <div className="contacts-box">
+          <div className="contacts-box" ref={contactsRef}>
             <div className="panel-heading compact">
               <h2>최근 연락처</h2>
               <span>{contacts.length}</span>
@@ -413,15 +450,15 @@ export default function App() {
       </section>
 
       <nav className="bottom-nav" aria-label="모바일 하단 메뉴">
-        <button className="active" type="button">
+        <button className="active" type="button" onClick={triggerCamera}>
           <Camera size={20} />
-          홈
+          스캔
         </button>
-        <button type="button">
+        <button type="button" onClick={showContacts}>
           <Users size={20} />
           연락처
         </button>
-        <button type="button">
+        <button type="button" onClick={() => setSettingsOpen(true)}>
           <Sheet size={20} />
           Sheets
         </button>
