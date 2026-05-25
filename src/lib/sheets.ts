@@ -129,12 +129,23 @@ export async function saveToGoogleSheet(endpoint: string, contact: Contact) {
     throw new Error('Apps Script endpoint is required.');
   }
 
-  await fetch(endpoint.trim(), {
+  const response = await fetch('/.netlify/functions/save-contact', {
     method: 'POST',
-    mode: 'no-cors',
     headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ...contact, userAgent: navigator.userAgent }),
+    body: JSON.stringify({
+      endpoint: endpoint.trim(),
+      contact,
+      userAgent: navigator.userAgent,
+    }),
   });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || 'Google Sheets 저장 확인에 실패했습니다.');
+  }
+
+  return payload as { ok: true; id: string; createdAt: string };
 }

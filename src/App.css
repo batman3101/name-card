@@ -479,10 +479,28 @@ progress {
   margin-top: 16px;
 }
 
-.inline-error {
-  color: #a13d21;
+.save-message {
+  background: #eef5fb;
+  border: 1px solid #d3e0ea;
+  border-radius: 8px;
+  color: #385064;
   font-size: 13px;
   font-weight: 700;
+  margin-top: 12px;
+  max-width: none;
+  padding: 10px 12px;
+}
+
+.save-message.success {
+  background: #e8f6f1;
+  border-color: #bde3d5;
+  color: #117457;
+}
+
+.save-message.error {
+  background: #fff1ec;
+  border-color: #f1b8a7;
+  color: #a13d21;
 }
 
 .settings-box,

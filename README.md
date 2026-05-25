@@ -69,6 +69,8 @@ npm run preview
 
 `AI 스캔`을 누른 경우에는 명함 이미지가 Netlify Function을 통해 Google Gemini API로 전송됩니다. Gemini API Key는 브라우저에 노출하지 않고 Netlify Function 환경변수에서만 사용합니다.
 
+`Sheets 저장`은 Netlify Function이 Apps Script 응답을 확인한 뒤 `ok: true`를 받은 경우에만 저장 완료로 표시합니다. 저장 완료가 표시되었는데 시트에 행이 없다면 브라우저 캐시가 이전 앱 버전을 보고 있거나, Netlify 최신 배포가 아직 적용되지 않은 상태일 가능성이 큽니다.
+
 ## Gemini AI OCR 설정
 
 AI 인식은 `gemini-2.5-flash`를 기본 모델로 사용합니다.

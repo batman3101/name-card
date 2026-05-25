@@ -165,6 +165,7 @@ export default function App() {
   const [isAiReading, setIsAiReading] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
     return () => {
@@ -325,6 +326,7 @@ export default function App() {
   async function saveDraft() {
     const contact = { ...draft, sourceText, createdAt: new Date().toISOString() };
     setSaveState('saving');
+    setSaveMessage('Google Sheets 저장 확인 중');
 
     try {
       await saveToGoogleSheet(endpoint, contact);
@@ -333,11 +335,13 @@ export default function App() {
       storeContacts(nextContacts);
       storeEndpoint(endpoint);
       setSaveState('saved');
+      setSaveMessage('Google Sheets 저장 확인됨');
       setDraft(emptyDraft());
       setSourceText('');
     } catch (error) {
       console.error(error);
       setSaveState('error');
+      setSaveMessage(error instanceof Error ? error.message : 'Google Sheets 저장 실패');
     }
   }
 
@@ -525,7 +529,11 @@ export default function App() {
             </button>
           </div>
 
-          {saveState === 'error' && <p className="inline-error">Apps Script URL을 설정한 뒤 다시 저장하세요.</p>}
+          {saveMessage && (
+            <p className={`save-message ${saveState === 'error' ? 'error' : saveState === 'saved' ? 'success' : ''}`}>
+              {saveMessage}
+            </p>
+          )}
         </div>
 
         <aside className="side-panel">
