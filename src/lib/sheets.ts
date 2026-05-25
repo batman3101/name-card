@@ -1,9 +1,13 @@
 import type { Contact } from '../types';
 
-export const TARGET_SHEET_ID = '1UE9t1sLfPVIy5HEQ1mHsXYgwp2-UHNDuo5VyQk7KQVk';
-export const TARGET_SHEET_URL = `https://docs.google.com/spreadsheets/d/${TARGET_SHEET_ID}/edit`;
+export const DEFAULT_SHEET_ID = '1UE9t1sLfPVIy5HEQ1mHsXYgwp2-UHNDuo5VyQk7KQVk';
 
-export const APPS_SCRIPT_TEMPLATE = `const SHEET_ID = '${TARGET_SHEET_ID}';
+export function getSheetUrl(sheetId: string) {
+  return `https://docs.google.com/spreadsheets/d/${sheetId.trim() || DEFAULT_SHEET_ID}/edit`;
+}
+
+export function createAppsScriptTemplate(sheetId: string) {
+  return `const SHEET_ID = '${sheetId.trim() || DEFAULT_SHEET_ID}';
 const SHEET_NAME = 'contacts';
 const HEADERS = [
   'id',
@@ -118,6 +122,7 @@ function json_(value) {
     ContentService.MimeType.JSON,
   );
 }`;
+}
 
 export async function saveToGoogleSheet(endpoint: string, contact: Contact) {
   if (!endpoint.trim()) {

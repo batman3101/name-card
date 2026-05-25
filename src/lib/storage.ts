@@ -2,6 +2,7 @@ import type { Contact } from '../types';
 
 const CONTACTS_KEY = 'card-leader.contacts.v1';
 const ENDPOINT_KEY = 'card-leader.apps-script-endpoint.v1';
+const SHEET_ID_KEY = 'card-leader.sheet-id.v1';
 const LEGACY_CONTACTS_KEY = 'card-ledger.contacts.v1';
 const LEGACY_ENDPOINT_KEY = 'card-ledger.apps-script-endpoint.v1';
 
@@ -30,4 +31,12 @@ export function loadEndpoint() {
 
 export function storeEndpoint(endpoint: string) {
   localStorage.setItem(ENDPOINT_KEY, endpoint);
+}
+
+export function loadSheetId(defaultSheetId: string) {
+  return localStorage.getItem(SHEET_ID_KEY) ?? defaultSheetId;
+}
+
+export function storeSheetId(sheetId: string) {
+  localStorage.setItem(SHEET_ID_KEY, sheetId);
 }

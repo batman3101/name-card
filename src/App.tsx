@@ -22,8 +22,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import { isPossibleDuplicate, parseBusinessCard } from './lib/contactParser';
 import { createPreviewImage, preprocessImage } from './lib/imageProcessing';
-import { APPS_SCRIPT_TEMPLATE, TARGET_SHEET_ID, TARGET_SHEET_URL, saveToGoogleSheet } from './lib/sheets';
-import { loadContacts, loadEndpoint, storeContacts, storeEndpoint } from './lib/storage';
+import { DEFAULT_SHEET_ID, createAppsScriptTemplate, getSheetUrl, saveToGoogleSheet } from './lib/sheets';
+import { loadContacts, loadEndpoint, loadSheetId, storeContacts, storeEndpoint, storeSheetId } from './lib/storage';
 import type { Contact, OcrStatus } from './types';
 
 const DEMO_TEXT = `ALMUS TECH
@@ -140,6 +140,7 @@ export default function App() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const contactsRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
   const imageUrlRef = useRef('');
   const previewRequestRef = useRef(0);
   const [contacts, setContacts] = useState<Contact[]>(() => {
@@ -152,6 +153,10 @@ export default function App() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [rotation, setRotation] = useState(0);
   const [endpoint, setEndpoint] = useState(() => loadEndpoint());
+  const [endpointDraft, setEndpointDraft] = useState(() => loadEndpoint());
+  const [sheetId, setSheetId] = useState(() => loadSheetId(DEFAULT_SHEET_ID));
+  const [sheetIdDraft, setSheetIdDraft] = useState(() => loadSheetId(DEFAULT_SHEET_ID));
+  const [settingsState, setSettingsState] = useState<'idle' | 'dirty' | 'saved'>('idle');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [ocrStatus, setOcrStatus] = useState<OcrStatus>({ label: '대기 중', progress: 0 });
@@ -167,6 +172,8 @@ export default function App() {
   }, []);
 
   const duplicate = useMemo(() => isPossibleDuplicate(draft, contacts), [draft, contacts]);
+  const scriptTemplate = useMemo(() => createAppsScriptTemplate(sheetIdDraft), [sheetIdDraft]);
+  const sheetUrl = useMemo(() => getSheetUrl(sheetId), [sheetId]);
   const filteredContacts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return contacts;
@@ -193,6 +200,11 @@ export default function App() {
 
   function showContacts() {
     contactsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showSettings() {
+    setSettingsOpen(true);
+    window.setTimeout(() => settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   }
 
   function handleSelectedFile(file: File | undefined) {
@@ -299,7 +311,30 @@ export default function App() {
   }
 
   function copyScript() {
-    void navigator.clipboard.writeText(APPS_SCRIPT_TEMPLATE);
+    void navigator.clipboard.writeText(scriptTemplate);
+  }
+
+  function updateEndpointDraft(value: string) {
+    setEndpointDraft(value);
+    setSettingsState('dirty');
+  }
+
+  function updateSheetIdDraft(value: string) {
+    setSheetIdDraft(value);
+    setSettingsState('dirty');
+  }
+
+  function saveSettings() {
+    const nextEndpoint = endpointDraft.trim();
+    const nextSheetId = sheetIdDraft.trim() || DEFAULT_SHEET_ID;
+
+    setEndpoint(nextEndpoint);
+    setSheetId(nextSheetId);
+    setEndpointDraft(nextEndpoint);
+    setSheetIdDraft(nextSheetId);
+    storeEndpoint(nextEndpoint);
+    storeSheetId(nextSheetId);
+    setSettingsState('saved');
   }
 
   return (
@@ -335,7 +370,7 @@ export default function App() {
             <small>무료 OCR 명함 관리 PWA</small>
           </div>
         </div>
-        <button className="icon-button" type="button" onClick={() => setSettingsOpen((open) => !open)} aria-label="설정">
+        <button className="icon-button" type="button" onClick={showSettings} aria-label="설정">
           <Settings size={20} />
         </button>
       </header>
@@ -448,7 +483,7 @@ export default function App() {
 
         <aside className="side-panel">
           {settingsOpen && (
-            <div className="settings-box">
+            <div className="settings-box" ref={settingsRef}>
               <div className="panel-heading compact">
                 <h2>Google Sheets 연결</h2>
                 <button className="icon-button muted" type="button" onClick={copyScript} aria-label="Apps Script 복사">
@@ -457,24 +492,42 @@ export default function App() {
               </div>
               <div className="sheet-target">
                 <span>저장 대상</span>
-                <strong>{TARGET_SHEET_ID}</strong>
-                <a href={TARGET_SHEET_URL} target="_blank" rel="noreferrer">
+                <strong>{sheetId}</strong>
+                <a href={sheetUrl} target="_blank" rel="noreferrer">
                   시트 열기
                   <ExternalLink size={14} />
                 </a>
               </div>
               <label className="field">
-                <span>Apps Script Web App URL</span>
-                <input
-                  value={endpoint}
-                  onChange={(event) => {
-                    setEndpoint(event.target.value);
-                    storeEndpoint(event.target.value);
-                  }}
-                  placeholder="https://script.google.com/macros/s/..."
+                <span>Google Sheet ID</span>
+                <textarea
+                  className="settings-textarea"
+                  value={sheetIdDraft}
+                  onChange={(event) => updateSheetIdDraft(event.target.value)}
+                  placeholder="Google Sheet ID"
+                  spellCheck={false}
                 />
               </label>
-              <pre>{APPS_SCRIPT_TEMPLATE}</pre>
+              <label className="field">
+                <span>Apps Script Web App URL</span>
+                <textarea
+                  className="settings-textarea"
+                  value={endpointDraft}
+                  onChange={(event) => updateEndpointDraft(event.target.value)}
+                  placeholder="https://script.google.com/macros/s/..."
+                  spellCheck={false}
+                />
+              </label>
+              <div className="settings-actions">
+                <button className="primary-button" type="button" onClick={saveSettings}>
+                  <Save size={16} />
+                  설정 저장
+                </button>
+                <span className={`settings-status ${settingsState}`}>
+                  {settingsState === 'saved' ? '저장됨' : settingsState === 'dirty' ? '저장 필요' : '대기 중'}
+                </span>
+              </div>
+              <pre className="code-preview">{scriptTemplate}</pre>
             </div>
           )}
 
@@ -532,11 +585,11 @@ export default function App() {
           <Users size={20} />
           연락처
         </button>
-        <button type="button" onClick={() => setSettingsOpen(true)}>
+        <button type="button" onClick={showSettings}>
           <Sheet size={20} />
           Sheets
         </button>
-        <button type="button" onClick={() => setSettingsOpen((open) => !open)}>
+        <button type="button" onClick={showSettings}>
           <Settings size={20} />
           설정
         </button>

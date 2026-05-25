@@ -54,13 +54,14 @@ npm run preview
 ## 배포된 앱 사용법
 
 1. Android Chrome에서 배포된 앱 URL을 엽니다.
-2. 처음 사용할 때는 우측 상단 설정 버튼을 누릅니다.
-3. `Apps Script Web App URL`에 본인이 배포한 Apps Script 웹 앱 URL을 붙여 넣습니다.
-4. `이미지 넣기`를 눌러 명함 사진을 촬영하거나 기존 사진을 선택합니다.
-5. OCR이 끝나면 이름, 회사, 직책, 전화, 이메일, 주소, 태그, 메모를 확인합니다.
-6. 인식 결과가 틀리면 필드를 직접 수정합니다.
-7. `Sheets 저장`을 누르면 설정한 Google Sheet의 `contacts` 탭에 저장됩니다.
-8. 저장된 연락처는 앱의 `최근 연락처` 영역에서 검색할 수 있습니다.
+2. 처음 사용할 때는 우측 상단 또는 하단의 설정 버튼을 누릅니다.
+3. `Google Sheet ID`와 `Apps Script Web App URL`을 입력합니다.
+4. `설정 저장`을 눌러 `저장됨` 상태를 확인합니다.
+5. `스캔` 또는 `업로드`로 명함 사진을 촬영하거나 기존 사진을 선택합니다.
+6. OCR이 끝나면 이름, 회사, 직책, 전화, 이메일, 주소, 태그, 메모를 확인합니다.
+7. 인식 결과가 틀리면 필드를 직접 수정합니다.
+8. `Sheets 저장`을 누르면 설정한 Google Sheet의 `contacts` 탭에 저장됩니다.
+9. 저장된 연락처는 앱의 `최근 연락처` 영역에서 검색할 수 있습니다.
 
 앱은 OCR을 브라우저에서 로컬로 실행합니다. 명함 이미지는 서버로 업로드되지 않고, 저장 버튼을 눌렀을 때 구조화된 연락처 데이터만 Apps Script로 전송됩니다.
 
@@ -102,16 +103,13 @@ https://docs.google.com/spreadsheets/d/내_SHEET_ID/edit
 const SHEET_ID = '내_SHEET_ID';
 ```
 
-4. 앱 화면에 표시되는 기본 Sheet 링크도 바꾸려면 `src/lib/sheets.ts`의 `TARGET_SHEET_ID` 값을 같은 ID로 바꿉니다.
-
-```typescript
-export const TARGET_SHEET_ID = '내_SHEET_ID';
-```
-
-5. Apps Script 편집기에 수정한 `Code.gs`를 붙여 넣습니다.
-6. Apps Script에서 `setup()`을 한 번 실행해 `contacts` 탭과 헤더를 생성합니다.
-7. 웹 앱으로 새 배포를 만들고 배포 URL을 복사합니다.
-8. 배포된 Card Leader 앱 우측 상단 설정에 새 Apps Script Web App URL을 붙여 넣습니다.
+4. 배포된 Card Leader 앱 설정 화면의 `Google Sheet ID`에도 같은 값을 입력합니다.
+5. 앱 설정 화면의 코드 복사 버튼으로 새 Sheet ID가 반영된 `Code.gs`를 복사할 수 있습니다.
+6. Apps Script 편집기에 수정한 `Code.gs`를 붙여 넣습니다.
+7. Apps Script에서 `setup()`을 한 번 실행해 `contacts` 탭과 헤더를 생성합니다.
+8. 웹 앱으로 새 배포를 만들고 배포 URL을 복사합니다.
+9. 배포된 Card Leader 앱 설정 화면에 새 Apps Script Web App URL을 붙여 넣습니다.
+10. `설정 저장`을 눌러 `저장됨` 상태를 확인합니다.
 
 주의할 점:
 
