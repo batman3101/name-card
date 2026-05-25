@@ -51,6 +51,19 @@ npm run preview
 
 로컬 개발 주소는 설치 테스트가 제한될 수 있습니다. 실제 스마트폰 설치 확인은 Vercel 같은 HTTPS 배포 URL에서 진행하세요.
 
+## 배포된 앱 사용법
+
+1. Android Chrome에서 배포된 앱 URL을 엽니다.
+2. 처음 사용할 때는 우측 상단 설정 버튼을 누릅니다.
+3. `Apps Script Web App URL`에 본인이 배포한 Apps Script 웹 앱 URL을 붙여 넣습니다.
+4. `이미지 넣기`를 눌러 명함 사진을 촬영하거나 기존 사진을 선택합니다.
+5. OCR이 끝나면 이름, 회사, 직책, 전화, 이메일, 태그, 메모를 확인합니다.
+6. 인식 결과가 틀리면 필드를 직접 수정합니다.
+7. `Sheets 저장`을 누르면 설정한 Google Sheet의 `contacts` 탭에 저장됩니다.
+8. 저장된 연락처는 앱의 `최근 연락처` 영역에서 검색할 수 있습니다.
+
+앱은 OCR을 브라우저에서 로컬로 실행합니다. 명함 이미지는 서버로 업로드되지 않고, 저장 버튼을 눌렀을 때 구조화된 연락처 데이터만 Apps Script로 전송됩니다.
+
 ## Google Sheets 백엔드 배포
 
 이 프로젝트에는 `apps-script/Code.gs`가 포함되어 있습니다. 이 코드는 아래 Google Sheet에 `contacts` 탭과 헤더를 자동 생성하고, 앱에서 보낸 연락처를 행으로 추가합니다.
@@ -69,6 +82,43 @@ npm run preview
 ```text
 id | createdAt | name | company | position | phone | email | tags | memo | confidence | sourceText | userAgent
 ```
+
+## 내 Google Sheet로 바꾸는 방법
+
+기본 저장 대상은 프로젝트에 설정된 Sheet입니다. 다른 사용자가 자기 Google Sheet를 쓰려면 아래 순서로 바꾸면 됩니다.
+
+1. 새 Google Sheet를 만듭니다.
+2. 브라우저 주소에서 `/d/`와 `/edit` 사이의 값을 복사합니다.
+
+예시:
+
+```text
+https://docs.google.com/spreadsheets/d/내_SHEET_ID/edit
+```
+
+3. `apps-script/Code.gs`의 `SHEET_ID` 값을 새 Sheet ID로 바꿉니다.
+
+```javascript
+const SHEET_ID = '내_SHEET_ID';
+```
+
+4. 앱 화면에 표시되는 기본 Sheet 링크도 바꾸려면 `src/lib/sheets.ts`의 `TARGET_SHEET_ID` 값을 같은 ID로 바꿉니다.
+
+```typescript
+export const TARGET_SHEET_ID = '내_SHEET_ID';
+```
+
+5. Apps Script 편집기에 수정한 `Code.gs`를 붙여 넣습니다.
+6. Apps Script에서 `setup()`을 한 번 실행해 `contacts` 탭과 헤더를 생성합니다.
+7. 웹 앱으로 새 배포를 만들고 배포 URL을 복사합니다.
+8. 배포된 Card Ledger 앱 우측 상단 설정에 새 Apps Script Web App URL을 붙여 넣습니다.
+
+주의할 점:
+
+- Sheet ID와 Apps Script 배포 URL은 서로 다른 값입니다.
+- 앱 설정에는 Sheet URL이 아니라 Apps Script Web App URL을 넣어야 합니다.
+- Apps Script를 수정한 뒤에는 새 배포 또는 배포 관리를 통해 최신 버전을 다시 배포해야 앱에서 변경 사항이 반영됩니다.
+- 웹 앱 액세스 권한을 제한하면 스마트폰 앱에서 저장이 실패할 수 있습니다. 개인용 MVP는 `모든 사용자` 접근으로 시작하는 것이 가장 단순합니다.
 
 ## 배포
 
