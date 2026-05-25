@@ -1,4 +1,4 @@
-# Card Ledger
+# Card Leader
 
 명함 사진을 브라우저에서 OCR 처리하고, 연락처를 Google Sheets에 저장하는 무료 Android 설치형 PWA입니다.
 
@@ -39,7 +39,7 @@ npm run preview
 
 1. Chrome에서 앱 URL을 엽니다.
 2. 메뉴 > 홈 화면에 추가 또는 앱 설치를 선택합니다.
-3. 설치 후 홈 화면의 `Card Ledger` 아이콘으로 실행합니다.
+3. 설치 후 홈 화면의 `Card Leader` 아이콘으로 실행합니다.
 
 설치 조건은 앱에 반영되어 있습니다.
 
@@ -111,7 +111,7 @@ export const TARGET_SHEET_ID = '내_SHEET_ID';
 5. Apps Script 편집기에 수정한 `Code.gs`를 붙여 넣습니다.
 6. Apps Script에서 `setup()`을 한 번 실행해 `contacts` 탭과 헤더를 생성합니다.
 7. 웹 앱으로 새 배포를 만들고 배포 URL을 복사합니다.
-8. 배포된 Card Ledger 앱 우측 상단 설정에 새 Apps Script Web App URL을 붙여 넣습니다.
+8. 배포된 Card Leader 앱 우측 상단 설정에 새 Apps Script Web App URL을 붙여 넣습니다.
 
 주의할 점:
 

@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Card Ledger",
-  "short_name": "Card Ledger",
+  "name": "Card Leader",
+  "short_name": "Card Leader",
   "description": "Business card OCR and Google Sheets contact manager",
   "start_url": "/",
   "scope": "/",

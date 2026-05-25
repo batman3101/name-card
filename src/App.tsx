@@ -282,7 +282,7 @@ export default function App() {
             <img src="/profile-icon-64.png" alt="" />
           </span>
           <div>
-            <strong>Card Ledger</strong>
+            <strong>Card Leader</strong>
             <small>무료 OCR 명함 관리 PWA</small>
           </div>
         </div>
