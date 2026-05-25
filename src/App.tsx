@@ -8,6 +8,7 @@ import {
   FileImage,
   Loader2,
   Phone,
+  RotateCw,
   Save,
   Search,
   Settings,
@@ -142,6 +143,8 @@ export default function App() {
   const [draft, setDraft] = useState<Contact>(() => parseBusinessCard(DEMO_TEXT));
   const [sourceText, setSourceText] = useState(DEMO_TEXT);
   const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [rotation, setRotation] = useState(0);
   const [endpoint, setEndpoint] = useState(() => loadEndpoint());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -179,10 +182,24 @@ export default function App() {
   }
 
   function handleSelectedFile(file: File | undefined) {
-    if (file) void readBusinessCard(file);
+    if (file) {
+      setImageFile(file);
+      setRotation(0);
+      void readBusinessCard(file, 0);
+    }
   }
 
-  async function readBusinessCard(file: File) {
+  function rotateImage() {
+    if (!imageFile) return;
+    setRotation((current) => (current + 90) % 360);
+    setOcrStatus({ label: '회전 적용됨', progress: 0 });
+  }
+
+  function rereadRotatedImage() {
+    if (imageFile) void readBusinessCard(imageFile, rotation);
+  }
+
+  async function readBusinessCard(file: File, imageRotation = rotation) {
     setIsReading(true);
     setSaveState('idle');
     setOcrStatus({ label: '이미지 보정 중', progress: 8 });
@@ -191,7 +208,7 @@ export default function App() {
     setImageUrl(URL.createObjectURL(file));
 
     try {
-      const processedImage = await preprocessImage(file);
+      const processedImage = await preprocessImage(file, imageRotation);
       const { createWorker } = await import('tesseract.js');
       const worker = await createWorker(['eng', 'kor', 'vie'], 1, {
         logger: (message) => {
@@ -318,7 +335,15 @@ export default function App() {
 
           <div className="dropzone">
             <div className="preview-frame">
-              {imageUrl ? <img src={imageUrl} alt="업로드된 명함" /> : <FileImage size={52} />}
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt="업로드된 명함"
+                  style={{ transform: `rotate(${rotation}deg)` }}
+                />
+              ) : (
+                <FileImage size={52} />
+              )}
             </div>
             <div className="dropzone-copy">
               <strong>명함 사진 선택 또는 촬영</strong>
@@ -333,6 +358,18 @@ export default function App() {
                 <Upload size={16} />
                 업로드
               </button>
+              {imageFile && (
+                <>
+                  <button className="secondary-button compact-button" type="button" onClick={rotateImage}>
+                    <RotateCw size={16} />
+                    90도 회전
+                  </button>
+                  <button className="secondary-button compact-button" type="button" onClick={rereadRotatedImage} disabled={isReading}>
+                    {isReading ? <Loader2 className="spin" size={16} /> : <Sparkles size={16} />}
+                    회전 후 OCR
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

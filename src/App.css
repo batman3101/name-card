@@ -255,6 +255,7 @@ p {
 .preview-frame img {
   height: 100%;
   object-fit: cover;
+  transition: transform 180ms ease;
   width: 100%;
 }
 
