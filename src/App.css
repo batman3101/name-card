@@ -254,8 +254,7 @@ p {
 
 .preview-frame img {
   height: 100%;
-  object-fit: cover;
-  transition: transform 180ms ease;
+  object-fit: contain;
   width: 100%;
 }
 
@@ -621,6 +620,11 @@ progress {
 
   .dropzone {
     grid-template-columns: 1fr;
+  }
+
+  .preview-frame {
+    aspect-ratio: 1.58;
+    width: 100%;
   }
 
   .dropzone-actions,

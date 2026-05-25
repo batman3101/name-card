@@ -18,10 +18,10 @@ import {
   Tag,
   Upload,
 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import { isPossibleDuplicate, parseBusinessCard } from './lib/contactParser';
-import { preprocessImage } from './lib/imageProcessing';
+import { createPreviewImage, preprocessImage } from './lib/imageProcessing';
 import { APPS_SCRIPT_TEMPLATE, TARGET_SHEET_ID, TARGET_SHEET_URL, saveToGoogleSheet } from './lib/sheets';
 import { loadContacts, loadEndpoint, storeContacts, storeEndpoint } from './lib/storage';
 import type { Contact, OcrStatus } from './types';
@@ -136,6 +136,8 @@ export default function App() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const contactsRef = useRef<HTMLDivElement>(null);
+  const imageUrlRef = useRef('');
+  const previewRequestRef = useRef(0);
   const [contacts, setContacts] = useState<Contact[]>(() => {
     const saved = loadContacts();
     return saved.length > 0 ? saved : SAMPLE_CONTACTS;
@@ -151,6 +153,14 @@ export default function App() {
   const [ocrStatus, setOcrStatus] = useState<OcrStatus>({ label: '대기 중', progress: 0 });
   const [isReading, setIsReading] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  useEffect(() => {
+    return () => {
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
+    };
+  }, []);
 
   const duplicate = useMemo(() => isPossibleDuplicate(draft, contacts), [draft, contacts]);
   const filteredContacts = useMemo(() => {
@@ -185,14 +195,17 @@ export default function App() {
     if (file) {
       setImageFile(file);
       setRotation(0);
+      void refreshPreview(file, 0);
       void readBusinessCard(file, 0);
     }
   }
 
   function rotateImage() {
     if (!imageFile) return;
-    setRotation((current) => (current + 90) % 360);
+    const nextRotation = (rotation + 90) % 360;
+    setRotation(nextRotation);
     setOcrStatus({ label: '회전 적용됨', progress: 0 });
+    void refreshPreview(imageFile, nextRotation);
   }
 
   function rereadRotatedImage() {
@@ -203,9 +216,6 @@ export default function App() {
     setIsReading(true);
     setSaveState('idle');
     setOcrStatus({ label: '이미지 보정 중', progress: 8 });
-
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
-    setImageUrl(URL.createObjectURL(file));
 
     try {
       const processedImage = await preprocessImage(file, imageRotation);
@@ -235,6 +245,24 @@ export default function App() {
     } finally {
       setIsReading(false);
     }
+  }
+
+  async function refreshPreview(file: File, imageRotation: number) {
+    const requestId = ++previewRequestRef.current;
+    const previewImage = await createPreviewImage(file, imageRotation);
+    const nextUrl = URL.createObjectURL(previewImage);
+
+    if (requestId !== previewRequestRef.current) {
+      URL.revokeObjectURL(nextUrl);
+      return;
+    }
+
+    if (imageUrlRef.current) {
+      URL.revokeObjectURL(imageUrlRef.current);
+    }
+
+    imageUrlRef.current = nextUrl;
+    setImageUrl(nextUrl);
   }
 
   async function saveDraft() {
@@ -336,11 +364,7 @@ export default function App() {
           <div className="dropzone">
             <div className="preview-frame">
               {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt="업로드된 명함"
-                  style={{ transform: `rotate(${rotation}deg)` }}
-                />
+                <img src={imageUrl} alt="업로드된 명함" />
               ) : (
                 <FileImage size={52} />
               )}
