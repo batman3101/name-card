@@ -300,6 +300,7 @@ p {
 .button-like,
 .primary-button,
 .secondary-button,
+.ai-button,
 .icon-button {
   align-items: center;
   border-radius: 8px;
@@ -321,6 +322,13 @@ p {
   border: 1px solid #0c6671;
   color: #fff;
   padding: 0 16px;
+}
+
+.ai-button {
+  background: #12343c;
+  border: 1px solid #12343c;
+  color: #fff;
+  padding: 0 14px;
 }
 
 .dropzone-actions {
@@ -363,9 +371,32 @@ p {
 .button-like:hover,
 .primary-button:hover,
 .secondary-button:hover,
+.ai-button:hover,
 .icon-button:hover {
   box-shadow: 0 8px 20px rgba(16, 45, 60, 0.1);
   transform: translateY(-1px);
+}
+
+.ai-button:disabled {
+  opacity: 0.72;
+}
+
+.ai-message {
+  background: #eef8f7;
+  border: 1px solid #c7e4df;
+  border-radius: 8px;
+  color: #0f5963;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 12px 0 0;
+  max-width: none;
+  padding: 10px 12px;
+}
+
+.ai-message.loading {
+  background: #eef5fb;
+  border-color: #d3e0ea;
+  color: #385064;
 }
 
 .ocr-meter {
@@ -711,12 +742,15 @@ progress {
 
   .dropzone-actions,
   .button-like,
+  .ai-button,
   .compact-button {
     width: 100%;
   }
 
   .dropzone-actions {
     display: grid;
+    justify-content: stretch;
+    width: 100%;
   }
 }
 

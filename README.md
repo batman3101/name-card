@@ -8,6 +8,7 @@
 - Tesseract.js 기반 로컬 OCR
 - OCR 전 이미지 흑백/대비 보정
 - 이름, 회사, 직책, 전화, 이메일, 주소 룰 기반 자동 파싱
+- Gemini 2.5 Flash 기반 AI 명함 인식
 - 중복 가능 연락처 표시
 - Google Apps Script Web App으로 Sheets 저장
 - 최근 연락처 로컬 검색
@@ -58,12 +59,58 @@ npm run preview
 3. `Google Sheet ID`와 `Apps Script Web App URL`을 입력합니다.
 4. `설정 저장`을 눌러 `저장됨` 상태를 확인합니다.
 5. `스캔` 또는 `업로드`로 명함 사진을 촬영하거나 기존 사진을 선택합니다.
-6. OCR이 끝나면 이름, 회사, 직책, 전화, 이메일, 주소, 태그, 메모를 확인합니다.
-7. 인식 결과가 틀리면 필드를 직접 수정합니다.
-8. `Sheets 저장`을 누르면 설정한 Google Sheet의 `contacts` 탭에 저장됩니다.
-9. 저장된 연락처는 앱의 `최근 연락처` 영역에서 검색할 수 있습니다.
+6. 기본 OCR 결과가 부족하면 `AI 스캔`을 눌러 Gemini 2.5 Flash로 명함 이미지를 다시 분석합니다.
+7. OCR 또는 AI 스캔이 끝나면 이름, 회사, 직책, 전화, 이메일, 주소, 태그, 메모를 확인합니다.
+8. 인식 결과가 틀리면 필드를 직접 수정합니다.
+9. `Sheets 저장`을 누르면 설정한 Google Sheet의 `contacts` 탭에 저장됩니다.
+10. 저장된 연락처는 앱의 `최근 연락처` 영역에서 검색할 수 있습니다.
 
 앱은 OCR을 브라우저에서 로컬로 실행합니다. 명함 이미지는 서버로 업로드되지 않고, 저장 버튼을 눌렀을 때 구조화된 연락처 데이터만 Apps Script로 전송됩니다.
+
+`AI 스캔`을 누른 경우에는 명함 이미지가 Netlify Function을 통해 Google Gemini API로 전송됩니다. Gemini API Key는 브라우저에 노출하지 않고 Netlify Function 환경변수에서만 사용합니다.
+
+## Gemini AI OCR 설정
+
+AI 인식은 `gemini-2.5-flash`를 기본 모델로 사용합니다.
+
+### API Key 보관 위치
+
+운영 배포에서는 API Key를 Netlify 환경변수에 넣는 것이 맞습니다. 프론트엔드 코드나 `VITE_` 환경변수에 API Key를 넣으면 배포된 JavaScript 안에 포함되어 노출됩니다.
+
+로컬 개발에서는 `.env` 파일에 넣을 수 있지만, 이 파일은 Git에 커밋하지 않습니다. 저장소에는 예시 파일인 `.env.example`만 포함합니다.
+
+### Netlify 환경변수 설정
+
+1. Netlify 대시보드에서 프로젝트 `namecard01`을 엽니다.
+2. `Project configuration` 또는 `Site configuration`으로 이동합니다.
+3. `Environment variables` 메뉴를 엽니다.
+4. `Add a variable`을 누릅니다.
+5. 아래 값을 추가합니다.
+
+```text
+GEMINI_API_KEY=Google AI Studio에서 발급한 API Key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+6. 변수 scope는 Functions에서 사용할 수 있어야 합니다.
+7. 저장 후 `Deploys`에서 최신 커밋을 다시 배포합니다.
+
+### 로컬 개발 설정
+
+로컬에서 Netlify Function까지 함께 테스트하려면 프로젝트 루트에 `.env`를 만들고 아래처럼 넣습니다.
+
+```text
+GEMINI_API_KEY=Google AI Studio에서 발급한 API Key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+그 다음 Netlify CLI로 실행합니다.
+
+```bash
+npx netlify-cli dev
+```
+
+일반 `npm run dev`는 Vite 앱만 실행하므로 `/.netlify/functions/gemini-card`가 동작하지 않습니다. AI 스캔까지 테스트하려면 Netlify Dev를 사용해야 합니다.
 
 ## Google Sheets 백엔드 배포
 

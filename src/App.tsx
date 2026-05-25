@@ -21,6 +21,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import { isPossibleDuplicate, parseBusinessCard } from './lib/contactParser';
+import { analyzeBusinessCardWithGemini } from './lib/gemini';
 import { createPreviewImage, preprocessImage } from './lib/imageProcessing';
 import { DEFAULT_SHEET_ID, createAppsScriptTemplate, getSheetUrl, saveToGoogleSheet } from './lib/sheets';
 import { loadContacts, loadEndpoint, loadSheetId, storeContacts, storeEndpoint, storeSheetId } from './lib/storage';
@@ -161,6 +162,8 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [ocrStatus, setOcrStatus] = useState<OcrStatus>({ label: '대기 중', progress: 0 });
   const [isReading, setIsReading] = useState(false);
+  const [isAiReading, setIsAiReading] = useState(false);
+  const [aiMessage, setAiMessage] = useState('');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
@@ -226,6 +229,44 @@ export default function App() {
 
   function rereadRotatedImage() {
     if (imageFile) void readBusinessCard(imageFile, rotation);
+  }
+
+  async function readBusinessCardWithAi() {
+    if (!imageFile) {
+      setAiMessage('먼저 명함 사진을 선택하세요.');
+      return;
+    }
+
+    setIsAiReading(true);
+    setSaveState('idle');
+    setAiMessage('Gemini 2.5 Flash 분석 중');
+    setOcrStatus({ label: 'AI 스캔 중', progress: 55 });
+
+    try {
+      const result = await analyzeBusinessCardWithGemini(imageFile, rotation);
+      setDraft((current) => ({
+        ...current,
+        name: result.name,
+        company: result.company,
+        position: result.position,
+        phone: result.phone,
+        email: result.email,
+        address: result.address,
+        tags: result.tags,
+        memo: result.memo || current.memo,
+        sourceText: result.rawText,
+        confidence: result.confidence,
+      }));
+      setSourceText(result.rawText);
+      setOcrStatus({ label: 'AI 스캔 완료', progress: 100 });
+      setAiMessage('AI 스캔 결과가 입력칸에 적용됨');
+    } catch (error) {
+      console.error(error);
+      setOcrStatus({ label: 'AI 스캔 실패', progress: 0 });
+      setAiMessage(error instanceof Error ? error.message : 'AI 스캔 실패');
+    } finally {
+      setIsAiReading(false);
+    }
   }
 
   async function readBusinessCard(file: File, imageRotation = rotation) {
@@ -431,10 +472,16 @@ export default function App() {
                     {isReading ? <Loader2 className="spin" size={16} /> : <Sparkles size={16} />}
                     회전 후 OCR
                   </button>
+                  <button className="ai-button compact-button" type="button" onClick={readBusinessCardWithAi} disabled={isAiReading}>
+                    {isAiReading ? <Loader2 className="spin" size={16} /> : <Sparkles size={16} />}
+                    AI 스캔
+                  </button>
                 </>
               )}
             </div>
           </div>
+
+          {aiMessage && <p className={`ai-message ${isAiReading ? 'loading' : ''}`}>{aiMessage}</p>}
 
           <div className="ocr-meter">
             <div>
