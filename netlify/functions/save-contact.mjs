@@ -35,10 +35,15 @@ export const handler = async (event) => {
   try {
     const payload = JSON.parse(event.body || '{}');
     const endpoint = String(payload.endpoint || '').trim();
+    const action = String(payload.action || 'upsert');
     const contact = payload.contact;
+    const id = String(payload.id || contact?.id || '').trim();
 
     if (!endpoint) return json(400, { ok: false, error: 'Apps Script Web App URL이 필요합니다.' });
-    if (!contact || typeof contact !== 'object') return json(400, { ok: false, error: '저장할 연락처 데이터가 없습니다.' });
+    if (action === 'delete' && !id) return json(400, { ok: false, error: '삭제할 연락처 ID가 없습니다.' });
+    if (action !== 'delete' && (!contact || typeof contact !== 'object')) {
+      return json(400, { ok: false, error: '저장할 연락처 데이터가 없습니다.' });
+    }
 
     assertAppsScriptUrl(endpoint);
 
@@ -47,7 +52,11 @@ export const handler = async (event) => {
       headers: {
         'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: JSON.stringify({ ...contact, userAgent: payload.userAgent || '' }),
+      body: JSON.stringify(
+        action === 'delete'
+          ? { action, id }
+          : { action, ...contact, userAgent: payload.userAgent || '' },
+      ),
     });
 
     const text = await response.text();
@@ -65,7 +74,13 @@ export const handler = async (event) => {
       throw new Error(result.error || `Apps Script 저장 실패: HTTP ${response.status}`);
     }
 
-    return json(200, { ok: true, id: result.id, createdAt: result.createdAt });
+    return json(200, {
+      ok: true,
+      action: result.action || action,
+      id: result.id,
+      createdAt: result.createdAt,
+      deleted: Boolean(result.deleted),
+    });
   } catch (error) {
     return json(500, {
       ok: false,

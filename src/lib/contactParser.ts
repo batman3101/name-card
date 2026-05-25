@@ -352,6 +352,8 @@ export function parseBusinessCard(text: string): Contact {
 
 export function isPossibleDuplicate(contact: Contact, contacts: Contact[]) {
   return contacts.some((item) => {
+    if (item.id === contact.id) return false;
+
     const sameEmail = contact.email && item.email.toLowerCase() === contact.email.toLowerCase();
     const samePhone = contact.phone && item.phone.replace(/\D/g, '') === contact.phone.replace(/\D/g, '');
     const sameNameCompany =

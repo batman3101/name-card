@@ -12,6 +12,7 @@
 - 중복 가능 연락처 표시
 - Google Apps Script Web App으로 Sheets 저장
 - 최근 연락처 로컬 검색
+- 최근 연락처 편집/삭제
 - Android Chrome 홈 화면 설치 지원
 
 ## 연결된 Google Sheet
@@ -64,6 +65,8 @@ npm run preview
 8. 인식 결과가 틀리면 필드를 직접 수정합니다.
 9. `Sheets 저장`을 누르면 설정한 Google Sheet의 `contacts` 탭에 저장됩니다.
 10. 저장된 연락처는 앱의 `최근 연락처` 영역에서 검색할 수 있습니다.
+11. 최근 연락처의 `편집`을 누르면 입력칸에 불러오고, 수정 후 `수정 저장`으로 같은 Sheet 행을 갱신합니다.
+12. 최근 연락처의 `삭제`를 누르면 Sheet 행과 앱의 최근 목록에서 제거합니다.
 
 앱은 OCR을 브라우저에서 로컬로 실행합니다. 명함 이미지는 서버로 업로드되지 않고, 저장 버튼을 눌렀을 때 구조화된 연락처 데이터만 Apps Script로 전송됩니다.
 
@@ -116,7 +119,7 @@ npx netlify-cli dev
 
 ## Google Sheets 백엔드 배포
 
-이 프로젝트에는 `apps-script/Code.gs`가 포함되어 있습니다. 이 코드는 아래 Google Sheet에 `contacts` 탭과 헤더를 자동 생성하고, 앱에서 보낸 연락처를 행으로 추가합니다.
+이 프로젝트에는 `apps-script/Code.gs`가 포함되어 있습니다. 이 코드는 아래 Google Sheet에 `contacts` 탭과 헤더를 자동 생성하고, 앱에서 보낸 연락처를 행으로 추가/수정/삭제합니다.
 
 1. Google Sheet를 엽니다.
 2. 확장 프로그램 > Apps Script를 엽니다.

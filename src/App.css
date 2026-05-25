@@ -634,11 +634,16 @@ progress {
   color: inherit;
   display: grid;
   gap: 10px;
-  grid-template-columns: 38px 1fr auto;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   min-height: 58px;
   padding: 8px;
   text-align: left;
   width: 100%;
+}
+
+.contact-row.editing {
+  border-color: #0c6671;
+  box-shadow: 0 0 0 2px rgba(12, 102, 113, 0.12);
 }
 
 .avatar {
@@ -657,6 +662,15 @@ progress {
 .contact-meta {
   display: grid;
   min-width: 0;
+}
+
+.contact-main {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  justify-content: stretch;
+  padding: 0;
+  text-align: left;
 }
 
 .contact-main strong,
@@ -679,6 +693,32 @@ progress {
 .contact-meta {
   color: #6c7b89;
   justify-items: end;
+}
+
+.contact-actions {
+  display: flex;
+  gap: 6px;
+  grid-column: 2 / 4;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.contact-actions button {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #d7e2eb;
+  border-radius: 8px;
+  color: #244250;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.contact-actions button:disabled {
+  opacity: 0.7;
 }
 
 .empty-state {

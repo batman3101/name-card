@@ -34,8 +34,16 @@ function doPost(e) {
     const payload = parsePayload_(e);
     const sheet = ensureContactsSheet_();
     const now = new Date();
+    const action = payload.action || 'upsert';
+
+    if (action === 'delete') {
+      const deleted = deleteRowById_(sheet, payload.id);
+      return json_({ ok: true, action: 'deleted', id: payload.id || '', deleted });
+    }
+
+    const id = payload.id || Utilities.getUuid();
     const row = [
-      payload.id || Utilities.getUuid(),
+      id,
       payload.createdAt || now.toISOString(),
       payload.name || '',
       payload.company || '',
@@ -50,14 +58,36 @@ function doPost(e) {
       payload.userAgent || '',
     ];
 
-    sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);
+    const rowIndex = findRowById_(sheet, id);
+    const actionResult = rowIndex > 0 ? 'updated' : 'created';
+    sheet.getRange(rowIndex > 0 ? rowIndex : sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);
 
-    return json_({ ok: true, id: row[0], createdAt: row[1] });
+    return json_({ ok: true, action: actionResult, id: row[0], createdAt: row[1] });
   } catch (error) {
     return json_({ ok: false, error: String(error && error.message ? error.message : error) });
   } finally {
     lock.releaseLock();
   }
+}
+
+function findRowById_(sheet, id) {
+  if (!id) return 0;
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return 0;
+
+  const values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  const target = String(id);
+  const index = values.findIndex((row) => String(row[0]) === target);
+  return index >= 0 ? index + 2 : 0;
+}
+
+function deleteRowById_(sheet, id) {
+  const rowIndex = findRowById_(sheet, id);
+  if (rowIndex <= 0) return false;
+
+  sheet.deleteRow(rowIndex);
+  return true;
 }
 
 function setup() {

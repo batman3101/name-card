@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileImage,
   Loader2,
+  Pencil,
   Phone,
   RotateCw,
   Save,
@@ -16,6 +17,7 @@ import {
   Sparkles,
   Users,
   Tag,
+  Trash2,
   Upload,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -23,7 +25,7 @@ import './App.css';
 import { isPossibleDuplicate, parseBusinessCard } from './lib/contactParser';
 import { analyzeBusinessCardWithGemini } from './lib/gemini';
 import { createPreviewImage, preprocessImage } from './lib/imageProcessing';
-import { DEFAULT_SHEET_ID, createAppsScriptTemplate, getSheetUrl, saveToGoogleSheet } from './lib/sheets';
+import { DEFAULT_SHEET_ID, createAppsScriptTemplate, deleteFromGoogleSheet, getSheetUrl, saveToGoogleSheet } from './lib/sheets';
 import { loadContacts, loadEndpoint, loadSheetId, storeContacts, storeEndpoint, storeSheetId } from './lib/storage';
 import type { Contact, OcrStatus } from './types';
 
@@ -166,6 +168,7 @@ export default function App() {
   const [aiMessage, setAiMessage] = useState('');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMessage, setSaveMessage] = useState('');
+  const [deletingId, setDeletingId] = useState('');
 
   useEffect(() => {
     return () => {
@@ -176,6 +179,7 @@ export default function App() {
   }, []);
 
   const duplicate = useMemo(() => isPossibleDuplicate(draft, contacts), [draft, contacts]);
+  const isEditingExisting = useMemo(() => contacts.some((contact) => contact.id === draft.id), [contacts, draft.id]);
   const scriptTemplate = useMemo(() => createAppsScriptTemplate(sheetIdDraft), [sheetIdDraft]);
   const sheetUrl = useMemo(() => getSheetUrl(sheetId), [sheetId]);
   const filteredContacts = useMemo(() => {
@@ -204,6 +208,10 @@ export default function App() {
 
   function showContacts() {
     contactsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showEditor() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function showSettings() {
@@ -324,9 +332,9 @@ export default function App() {
   }
 
   async function saveDraft() {
-    const contact = { ...draft, sourceText, createdAt: new Date().toISOString() };
+    const contact = { ...draft, sourceText, createdAt: draft.createdAt || new Date().toISOString() };
     setSaveState('saving');
-    setSaveMessage('Google Sheets 저장 확인 중');
+    setSaveMessage(isEditingExisting ? 'Google Sheets 수정 확인 중' : 'Google Sheets 저장 확인 중');
 
     try {
       await saveToGoogleSheet(endpoint, contact);
@@ -335,13 +343,49 @@ export default function App() {
       storeContacts(nextContacts);
       storeEndpoint(endpoint);
       setSaveState('saved');
-      setSaveMessage('Google Sheets 저장 확인됨');
+      setSaveMessage(isEditingExisting ? 'Google Sheets 수정 확인됨' : 'Google Sheets 저장 확인됨');
       setDraft(emptyDraft());
       setSourceText('');
     } catch (error) {
       console.error(error);
       setSaveState('error');
       setSaveMessage(error instanceof Error ? error.message : 'Google Sheets 저장 실패');
+    }
+  }
+
+  async function editContact(contact: Contact) {
+    setDraft(contact);
+    setSourceText(contact.sourceText || '');
+    setSaveState('idle');
+    setSaveMessage('편집 모드입니다. 수정 후 `수정 저장`을 누르세요.');
+    showEditor();
+  }
+
+  async function deleteContact(contact: Contact) {
+    const confirmed = window.confirm(`${contact.name || contact.company || '이 연락처'}를 삭제할까요?`);
+    if (!confirmed) return;
+
+    setDeletingId(contact.id);
+    setSaveState('saving');
+    setSaveMessage('Google Sheets 삭제 확인 중');
+
+    try {
+      await deleteFromGoogleSheet(endpoint, contact.id);
+      const nextContacts = contacts.filter((item) => item.id !== contact.id);
+      setContacts(nextContacts);
+      storeContacts(nextContacts);
+      if (draft.id === contact.id) {
+        setDraft(emptyDraft());
+        setSourceText('');
+      }
+      setSaveState('saved');
+      setSaveMessage('Google Sheets 삭제 확인됨');
+    } catch (error) {
+      console.error(error);
+      setSaveState('error');
+      setSaveMessage(error instanceof Error ? error.message : 'Google Sheets 삭제 실패');
+    } finally {
+      setDeletingId('');
     }
   }
 
@@ -525,7 +569,7 @@ export default function App() {
             </button>
             <button className="primary-button" type="button" onClick={saveDraft} disabled={saveState === 'saving'}>
               {saveState === 'saving' ? <Loader2 className="spin" size={17} /> : <Save size={17} />}
-              {saveState === 'saved' ? '저장 완료' : 'Sheets 저장'}
+              {saveState === 'saved' ? '저장 완료' : isEditingExisting ? '수정 저장' : 'Sheets 저장'}
             </button>
           </div>
 
@@ -612,18 +656,28 @@ export default function App() {
                 </div>
               ) : (
                 filteredContacts.map((contact) => (
-                  <button className="contact-row" type="button" key={contact.id} onClick={() => setDraft(contact)}>
+                  <article className={`contact-row ${contact.id === draft.id ? 'editing' : ''}`} key={contact.id}>
                     <span className="avatar">{contact.name.slice(0, 1) || '?'}</span>
-                    <span className="contact-main">
+                    <button className="contact-main" type="button" onClick={() => editContact(contact)}>
                       <strong>{contact.name || '이름 없음'}</strong>
                       <small>{contact.company || contact.email || '회사 정보 없음'}</small>
-                    </span>
+                    </button>
                     <span className="contact-meta">
                       <small>{formatDate(contact.createdAt)}</small>
                       {contact.phone && <Phone size={14} />}
                       {contact.tags && <Tag size={14} />}
                     </span>
-                  </button>
+                    <span className="contact-actions">
+                      <button type="button" onClick={() => editContact(contact)} aria-label={`${contact.name || '연락처'} 편집`}>
+                        <Pencil size={15} />
+                        편집
+                      </button>
+                      <button type="button" onClick={() => deleteContact(contact)} disabled={deletingId === contact.id} aria-label={`${contact.name || '연락처'} 삭제`}>
+                        {deletingId === contact.id ? <Loader2 className="spin" size={15} /> : <Trash2 size={15} />}
+                        삭제
+                      </button>
+                    </span>
+                  </article>
                 ))
               )}
             </div>
