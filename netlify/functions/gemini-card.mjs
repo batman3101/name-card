@@ -121,12 +121,8 @@ export const handler = async (event) => {
         ],
         generationConfig: {
           temperature: 0.1,
-          responseFormat: {
-            text: {
-              mimeType: 'application/json',
-              schema: contactSchema,
-            },
-          },
+          responseMimeType: 'application/json',
+          responseJsonSchema: contactSchema,
         },
       }),
     });
