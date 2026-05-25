@@ -9,7 +9,12 @@ export function loadContacts() {
   try {
     const saved = localStorage.getItem(CONTACTS_KEY) ?? localStorage.getItem(LEGACY_CONTACTS_KEY);
     const parsed = JSON.parse(saved ?? '[]');
-    return Array.isArray(parsed) ? (parsed as Contact[]) : [];
+    return Array.isArray(parsed)
+      ? parsed.map((contact) => {
+          const item = contact as Contact;
+          return { ...item, address: item.address ?? '' };
+        })
+      : [];
   } catch {
     return [];
   }

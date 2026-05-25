@@ -8,6 +8,7 @@ const HEADERS = [
   'position',
   'phone',
   'email',
+  'address',
   'tags',
   'memo',
   'confidence',
@@ -41,6 +42,7 @@ function doPost(e) {
       payload.position || '',
       payload.phone || '',
       payload.email || '',
+      payload.address || '',
       payload.tags || '',
       payload.memo || '',
       Number(payload.confidence || 0),
@@ -68,15 +70,34 @@ function setup() {
 function ensureContactsSheet_() {
   const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
   const sheet = spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME);
-  const currentHeaders = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
+  const lastColumn = Math.max(sheet.getLastColumn(), HEADERS.length);
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
   const needsHeaders = HEADERS.some((header, index) => currentHeaders[index] !== header);
 
   if (needsHeaders) {
+    migrateRows_(sheet, currentHeaders);
     sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
     sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
   }
 
   return sheet;
+}
+
+function migrateRows_(sheet, currentHeaders) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1 || currentHeaders.filter(String).length === 0) return;
+
+  const headerIndex = {};
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex[header] = index;
+  });
+
+  const oldValues = sheet.getRange(2, 1, lastRow - 1, currentHeaders.length).getValues();
+  const newValues = oldValues.map((row) =>
+    HEADERS.map((header) => (headerIndex[header] === undefined ? '' : row[headerIndex[header]] || '')),
+  );
+
+  sheet.getRange(2, 1, newValues.length, HEADERS.length).setValues(newValues);
 }
 
 function parsePayload_(e) {

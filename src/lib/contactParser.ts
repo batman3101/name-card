@@ -56,6 +56,26 @@ const COMPANY_WORDS = [
   'công ty',
 ];
 
+const ADDRESS_WORDS = [
+  'address',
+  '주소',
+  '본사',
+  '사무소',
+  'office',
+  'factory',
+  'plant',
+  'địa chỉ',
+  'dia chi',
+  'đường',
+  'duong',
+  'phường',
+  'phuong',
+  'quận',
+  'quan',
+  'tỉnh',
+  'thành phố',
+];
+
 function cleanLine(line: string) {
   return line.replace(/\s+/g, ' ').replace(/[|•·]+/g, ' ').trim();
 }
@@ -140,6 +160,37 @@ function normalizeCompany(line: string) {
     .replace(/\bsince\s+\d{4}\b/gi, '')
     .trim()
     .replace(/\s+/g, ' ');
+}
+
+function looksLikeAddress(line: string) {
+  const lower = line.toLowerCase();
+  if (EMAIL_PATTERN.test(line) || hasPhone(line)) return false;
+  if (ADDRESS_WORDS.some((word) => lower.includes(word))) return true;
+
+  const hasKoreanPlace = /[가-힣]+(도|시|군|구|읍|면|동|리)\b/.test(line);
+  const hasRoad = /(로|길|번길)\s*\d|산본로|갈주로|안남로/.test(line);
+  const hasPostal = /\(\s?\d{5}\s?,/.test(line) || /\b\d{5}\b/.test(line);
+  const hasVietnamPlace = /\b(duong|quan|phuong|tp|thanh pho|tinh)\b/i.test(line);
+
+  return line.length >= 10 && (hasKoreanPlace || hasRoad || hasPostal || hasVietnamPlace);
+}
+
+function normalizeAddress(line: string) {
+  return line
+    .replace(/^(address|addr|주소|소재지)\s*[:：-]?\s*/i, '')
+    .replace(/^(검사기|smt|vd\/로봇|rf파워)\s*자동화\s*/i, '')
+    .replace(/^(본사|사무소|공장|office|factory|plant)\s*[:：-]?\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractAddress(lines: string[]) {
+  const addresses = lines
+    .filter(looksLikeAddress)
+    .map(normalizeAddress)
+    .filter(Boolean);
+
+  return [...new Set(addresses)].slice(0, 4).join('\n');
 }
 
 function scoreCompanyLine(line: string, email: string) {
@@ -257,8 +308,9 @@ export function parseBusinessCard(text: string): Contact {
 
   const email = text.match(EMAIL_PATTERN)?.[0] ?? '';
   const phone = extractPhoneCandidates(lines).sort((a, b) => b.score - a.score || a.lineIndex - b.lineIndex)[0]?.value ?? '';
+  const address = extractAddress(lines);
   const nonContactLines = lines.filter(
-    (line) => !EMAIL_PATTERN.test(line) && !hasPhone(line),
+    (line) => !EMAIL_PATTERN.test(line) && !hasPhone(line) && !looksLikeAddress(line),
   );
 
   const companyCandidates = [
@@ -280,7 +332,7 @@ export function parseBusinessCard(text: string): Contact {
       .map((line) => ({ line: extractNameFromLine(line), score: scoreNameLine(line, email) }))
       .sort((a, b) => b.score - a.score)[0]?.line ?? '';
 
-  const filled = [name, company, position, phone, email].filter(Boolean).length;
+  const filled = [name, company, position, phone, email, address].filter(Boolean).length;
 
   return {
     id: crypto.randomUUID(),
@@ -290,10 +342,11 @@ export function parseBusinessCard(text: string): Contact {
     position,
     phone,
     email,
+    address,
     tags: '',
     memo: '',
     sourceText: text.trim(),
-    confidence: Math.round((filled / 5) * 100),
+    confidence: Math.round((filled / 6) * 100),
   };
 }
 

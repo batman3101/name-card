@@ -6,6 +6,7 @@ export type Contact = {
   position: string;
   phone: string;
   email: string;
+  address: string;
   tags: string;
   memo: string;
   sourceText: string;

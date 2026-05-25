@@ -7,7 +7,7 @@
 - 모바일 카메라 또는 이미지 업로드
 - Tesseract.js 기반 로컬 OCR
 - OCR 전 이미지 흑백/대비 보정
-- 이름, 회사, 직책, 전화, 이메일 룰 기반 자동 파싱
+- 이름, 회사, 직책, 전화, 이메일, 주소 룰 기반 자동 파싱
 - 중복 가능 연락처 표시
 - Google Apps Script Web App으로 Sheets 저장
 - 최근 연락처 로컬 검색
@@ -49,7 +49,7 @@ npm run preview
 - standalone 표시 모드
 - service worker 캐시
 
-로컬 개발 주소는 설치 테스트가 제한될 수 있습니다. 실제 스마트폰 설치 확인은 Vercel 같은 HTTPS 배포 URL에서 진행하세요.
+로컬 개발 주소는 설치 테스트가 제한될 수 있습니다. 실제 스마트폰 설치 확인은 Netlify 같은 HTTPS 배포 URL에서 진행하세요.
 
 ## 배포된 앱 사용법
 
@@ -57,7 +57,7 @@ npm run preview
 2. 처음 사용할 때는 우측 상단 설정 버튼을 누릅니다.
 3. `Apps Script Web App URL`에 본인이 배포한 Apps Script 웹 앱 URL을 붙여 넣습니다.
 4. `이미지 넣기`를 눌러 명함 사진을 촬영하거나 기존 사진을 선택합니다.
-5. OCR이 끝나면 이름, 회사, 직책, 전화, 이메일, 태그, 메모를 확인합니다.
+5. OCR이 끝나면 이름, 회사, 직책, 전화, 이메일, 주소, 태그, 메모를 확인합니다.
 6. 인식 결과가 틀리면 필드를 직접 수정합니다.
 7. `Sheets 저장`을 누르면 설정한 Google Sheet의 `contacts` 탭에 저장됩니다.
 8. 저장된 연락처는 앱의 `최근 연락처` 영역에서 검색할 수 있습니다.
@@ -80,7 +80,7 @@ npm run preview
 백엔드가 생성하는 헤더:
 
 ```text
-id | createdAt | name | company | position | phone | email | tags | memo | confidence | sourceText | userAgent
+id | createdAt | name | company | position | phone | email | address | tags | memo | confidence | sourceText | userAgent
 ```
 
 ## 내 Google Sheet로 바꾸는 방법

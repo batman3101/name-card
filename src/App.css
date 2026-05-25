@@ -401,6 +401,7 @@ progress {
   resize: vertical;
 }
 
+.address-field,
 .memo-field {
   margin-top: 12px;
 }

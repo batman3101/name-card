@@ -30,7 +30,8 @@ const DEMO_TEXT = `ALMUS TECH
 Bruce Wayne
 Technical Manager
 010-1234-5678
-bruce@almus.com`;
+bruce@almus.com
+경기도 부천시 원미구 길주로431번길 17`;
 
 const SAMPLE_CONTACTS: Contact[] = [
   {
@@ -41,6 +42,7 @@ const SAMPLE_CONTACTS: Contact[] = [
     position: '대표이사',
     phone: '010-9876-5432',
     email: 'jihoon.park@mirae.co.kr',
+    address: '서울특별시 강남구 테헤란로 123',
     tags: '고객, 영업',
     memo: '샘플 연락처',
     sourceText: '',
@@ -54,6 +56,7 @@ const SAMPLE_CONTACTS: Contact[] = [
     position: 'Giám đốc Kinh doanh',
     phone: '+84 90 123 4567',
     email: 'anh.nguyen@abc.vn',
+    address: 'Ho Chi Minh City, Vietnam',
     tags: '베트남, 파트너',
     memo: '샘플 연락처',
     sourceText: '',
@@ -79,6 +82,7 @@ function emptyDraft(): Contact {
     position: '',
     phone: '',
     email: '',
+    address: '',
     tags: '',
     memo: '',
     sourceText: '',
@@ -168,7 +172,7 @@ export default function App() {
     if (!normalized) return contacts;
 
     return contacts.filter((contact) =>
-      [contact.name, contact.company, contact.phone, contact.email, contact.tags]
+      [contact.name, contact.company, contact.phone, contact.email, contact.address, contact.tags]
         .join(' ')
         .toLowerCase()
         .includes(normalized),
@@ -414,6 +418,15 @@ export default function App() {
             <Field label="태그" value={draft.tags} onChange={(value) => updateDraft('tags', value)} placeholder="전시회, 구매, 베트남" />
           </div>
 
+          <label className="field address-field">
+            <span>주소</span>
+            <textarea
+              value={draft.address}
+              onChange={(event) => updateDraft('address', event.target.value)}
+              placeholder="회사 주소"
+            />
+          </label>
+
           <label className="field memo-field">
             <span>메모</span>
             <textarea value={draft.memo} onChange={(event) => updateDraft('memo', event.target.value)} placeholder="미팅 내용, 후속 조치" />
@@ -480,7 +493,7 @@ export default function App() {
             </div>
             <label className="search-box">
               <Search size={17} />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 회사, 전화, 태그 검색" />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 회사, 전화, 주소, 태그 검색" />
             </label>
             <div className="contact-list">
               {filteredContacts.length === 0 ? (
