@@ -29,44 +29,6 @@ import { DEFAULT_SHEET_ID, createAppsScriptTemplate, deleteFromGoogleSheet, getS
 import { loadContacts, loadEndpoint, loadSheetId, storeContacts, storeEndpoint, storeSheetId } from './lib/storage';
 import type { Contact, OcrStatus } from './types';
 
-const DEMO_TEXT = `ALMUS TECH
-Bruce Wayne
-Technical Manager
-010-1234-5678
-bruce@almus.com
-경기도 부천시 원미구 길주로431번길 17`;
-
-const SAMPLE_CONTACTS: Contact[] = [
-  {
-    id: 'sample-1',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    name: '박지훈',
-    company: '미래솔루션',
-    position: '대표이사',
-    phone: '010-9876-5432',
-    email: 'jihoon.park@mirae.co.kr',
-    address: '서울특별시 강남구 테헤란로 123',
-    tags: '고객, 영업',
-    memo: '샘플 연락처',
-    sourceText: '',
-    confidence: 96,
-  },
-  {
-    id: 'sample-2',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    name: 'Nguyen Van Anh',
-    company: 'ABC Solutions',
-    position: 'Giám đốc Kinh doanh',
-    phone: '+84 90 123 4567',
-    email: 'anh.nguyen@abc.vn',
-    address: 'Ho Chi Minh City, Vietnam',
-    tags: '베트남, 파트너',
-    memo: '샘플 연락처',
-    sourceText: '',
-    confidence: 94,
-  },
-];
-
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
     month: 'short',
@@ -146,12 +108,9 @@ export default function App() {
   const settingsRef = useRef<HTMLDivElement>(null);
   const imageUrlRef = useRef('');
   const previewRequestRef = useRef(0);
-  const [contacts, setContacts] = useState<Contact[]>(() => {
-    const saved = loadContacts();
-    return saved.length > 0 ? saved : SAMPLE_CONTACTS;
-  });
-  const [draft, setDraft] = useState<Contact>(() => parseBusinessCard(DEMO_TEXT));
-  const [sourceText, setSourceText] = useState(DEMO_TEXT);
+  const [contacts, setContacts] = useState<Contact[]>(() => loadContacts());
+  const [draft, setDraft] = useState<Contact>(() => emptyDraft());
+  const [sourceText, setSourceText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [rotation, setRotation] = useState(0);
