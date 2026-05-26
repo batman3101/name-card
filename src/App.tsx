@@ -31,6 +31,11 @@ import type { Contact, OcrStatus } from './types';
 
 type View = 'home' | 'capture' | 'settings';
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+};
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
     month: 'short',
@@ -129,6 +134,7 @@ export default function App() {
   const [saveMessage, setSaveMessage] = useState('');
   const [deletingId, setDeletingId] = useState('');
   const [confirmingDeleteId, setConfirmingDeleteId] = useState('');
+  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     return () => {
@@ -137,6 +143,26 @@ export default function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const onPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallEvent(event as BeforeInstallPromptEvent);
+    };
+    const onInstalled = () => setInstallEvent(null);
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
+
+  async function installApp() {
+    if (!installEvent) return;
+    await installEvent.prompt();
+    setInstallEvent(null);
+  }
 
   const duplicate = useMemo(() => isPossibleDuplicate(draft, contacts), [draft, contacts]);
   const isEditingExisting = useMemo(() => contacts.some((contact) => contact.id === draft.id), [contacts, draft.id]);
@@ -469,7 +495,7 @@ export default function App() {
             </span>
             <div>
               <strong>Card Leader</strong>
-              <small>무료 OCR 명함 관리 PWA</small>
+              <small>명함 관리 PWA</small>
             </div>
           </div>
         ) : (
@@ -487,6 +513,13 @@ export default function App() {
 
       {view === 'home' && (
         <section className="view view-home">
+          {installEvent && (
+            <button className="install-banner" type="button" onClick={installApp}>
+              <Download size={18} />
+              홈 화면에 앱 설치
+            </button>
+          )}
+
           <div className="home-actions">
             <button className="primary-button" type="button" onClick={triggerCamera}>
               <Camera size={18} />

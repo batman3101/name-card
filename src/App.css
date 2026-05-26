@@ -140,22 +140,19 @@ button {
 }
 
 .brand-mark {
-  align-items: center;
-  background: #0c1114;
   border-radius: var(--radius-md);
-  color: var(--color-on-accent);
-  display: inline-flex;
+  display: inline-block;
+  flex: 0 0 auto;
   height: 42px;
-  justify-content: center;
+  overflow: hidden;
   width: 42px;
 }
 
 .brand-mark img {
-  border-radius: var(--radius-full);
   display: block;
-  height: 34px;
+  height: 100%;
   object-fit: cover;
-  width: 34px;
+  width: 100%;
 }
 
 .brand strong,
@@ -182,6 +179,37 @@ button {
   max-width: 680px;
   min-width: 0;
   width: 100%;
+}
+
+.install-banner {
+  align-items: center;
+  background: var(--color-teal-surface);
+  border: 1px solid var(--color-teal-surface-border);
+  border-radius: var(--radius-md);
+  color: var(--color-teal-surface-text);
+  display: inline-flex;
+  font-weight: var(--weight-semibold);
+  gap: 8px;
+  justify-content: center;
+  min-height: 48px;
+  transition:
+    box-shadow var(--ease-control),
+    transform var(--ease-control);
+  width: 100%;
+}
+
+.install-banner:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.install-banner:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.install-banner:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
 }
 
 .home-actions {
