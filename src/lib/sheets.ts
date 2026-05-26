@@ -171,10 +171,10 @@ export async function deleteFromGoogleSheet(endpoint: string, id: string) {
 
 async function requestSheetAction(endpoint: string, body: Record<string, unknown>) {
   if (!endpoint.trim()) {
-    throw new Error('Apps Script endpoint is required.');
+    throw new Error('설정에서 Apps Script Web App URL을 입력하고 `설정 저장`을 누르세요.');
   }
 
-  const response = await fetch('/.netlify/functions/save-contact', {
+  const response = await fetch('/api/save-contact', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -28,7 +28,7 @@ function blobToBase64(blob: Blob) {
 export async function analyzeBusinessCardWithGemini(file: File, rotation: number): Promise<GeminiCardResult> {
   const image = await createPreviewImage(file, rotation);
   const imageBase64 = await blobToBase64(image);
-  const response = await fetch('/.netlify/functions/gemini-card', {
+  const response = await fetch('/api/gemini-card', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

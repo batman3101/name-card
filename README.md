@@ -70,9 +70,9 @@ npm run preview
 
 앱은 OCR을 브라우저에서 로컬로 실행합니다. 명함 이미지는 서버로 업로드되지 않고, 저장 버튼을 눌렀을 때 구조화된 연락처 데이터만 Apps Script로 전송됩니다.
 
-`AI 스캔`을 누른 경우에는 명함 이미지가 Netlify Function을 통해 Google Gemini API로 전송됩니다. Gemini API Key는 브라우저에 노출하지 않고 Netlify Function 환경변수에서만 사용합니다.
+`AI 스캔`을 누른 경우에는 명함 이미지가 Vercel 서버리스 함수(`/api/gemini-card`)를 통해 Google Gemini API로 전송됩니다. Gemini API Key는 브라우저에 노출하지 않고 Vercel 환경변수에서만 사용합니다.
 
-`Sheets 저장`은 Netlify Function이 Apps Script 응답을 확인한 뒤 `ok: true`를 받은 경우에만 저장 완료로 표시합니다. 저장 완료가 표시되었는데 시트에 행이 없다면 브라우저 캐시가 이전 앱 버전을 보고 있거나, Netlify 최신 배포가 아직 적용되지 않은 상태일 가능성이 큽니다.
+`Sheets 저장`은 Vercel 함수(`/api/save-contact`)가 Apps Script 응답을 확인한 뒤 `ok: true`를 받은 경우에만 저장 완료로 표시합니다. 저장 완료가 표시되었는데 시트에 행이 없다면 브라우저 캐시가 이전 앱 버전을 보고 있거나, Vercel 최신 배포가 아직 적용되지 않은 상태일 가능성이 큽니다.
 
 ## Gemini AI OCR 설정
 
@@ -80,42 +80,46 @@ AI 인식은 `gemini-2.5-flash`를 기본 모델로 사용합니다.
 
 ### API Key 보관 위치
 
-운영 배포에서는 API Key를 Netlify 환경변수에 넣는 것이 맞습니다. 프론트엔드 코드나 `VITE_` 환경변수에 API Key를 넣으면 배포된 JavaScript 안에 포함되어 노출됩니다.
+운영 배포에서는 API Key를 Vercel 환경변수에 넣는 것이 맞습니다. 프론트엔드 코드나 `VITE_` 환경변수에 API Key를 넣으면 배포된 JavaScript 안에 포함되어 노출됩니다.
 
 로컬 개발에서는 `.env` 파일에 넣을 수 있지만, 이 파일은 Git에 커밋하지 않습니다. 저장소에는 예시 파일인 `.env.example`만 포함합니다.
 
-### Netlify 환경변수 설정
+### Vercel 환경변수 설정
 
-1. Netlify 대시보드에서 프로젝트 `namecard01`을 엽니다.
-2. `Project configuration` 또는 `Site configuration`으로 이동합니다.
-3. `Environment variables` 메뉴를 엽니다.
-4. `Add a variable`을 누릅니다.
-5. 아래 값을 추가합니다.
+1. Vercel 대시보드에서 이 프로젝트를 엽니다.
+2. `Settings` > `Environment Variables`로 이동합니다.
+3. 아래 값을 추가합니다 (Production, Preview, Development 환경 모두 권장).
 
 ```text
 GEMINI_API_KEY=Google AI Studio에서 발급한 API Key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-6. 변수 scope는 Functions에서 사용할 수 있어야 합니다.
-7. 저장 후 `Deploys`에서 최신 커밋을 다시 배포합니다.
+4. 저장 후 `Deployments`에서 최신 커밋을 다시 배포(Redeploy)합니다.
+
+CLI로 추가할 수도 있습니다.
+
+```bash
+vercel env add GEMINI_API_KEY
+vercel env add GEMINI_MODEL
+```
 
 ### 로컬 개발 설정
 
-로컬에서 Netlify Function까지 함께 테스트하려면 프로젝트 루트에 `.env`를 만들고 아래처럼 넣습니다.
+로컬에서 `/api` 함수까지 함께 테스트하려면 프로젝트 루트에 `.env`를 만들고 아래처럼 넣습니다.
 
 ```text
 GEMINI_API_KEY=Google AI Studio에서 발급한 API Key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-그 다음 Netlify CLI로 실행합니다.
+그 다음 Vercel CLI로 실행합니다.
 
 ```bash
-npx netlify-cli dev
+vercel dev
 ```
 
-일반 `npm run dev`는 Vite 앱만 실행하므로 `/.netlify/functions/gemini-card`가 동작하지 않습니다. AI 스캔까지 테스트하려면 Netlify Dev를 사용해야 합니다.
+일반 `npm run dev`는 Vite 앱만 실행하므로 `/api/gemini-card`가 동작하지 않습니다. AI 스캔까지 테스트하려면 `vercel dev` 또는 Vercel 프리뷰 배포를 사용해야 합니다.
 
 ## Google Sheets 백엔드 배포
 
@@ -169,13 +173,22 @@ const SHEET_ID = '내_SHEET_ID';
 - 앱 설정에는 Sheet URL이 아니라 Apps Script Web App URL을 넣어야 합니다.
 - Apps Script를 수정한 뒤에는 새 배포 또는 배포 관리를 통해 최신 버전을 다시 배포해야 앱에서 변경 사항이 반영됩니다.
 - 웹 앱 액세스 권한을 제한하면 스마트폰 앱에서 저장이 실패할 수 있습니다. 개인용 MVP는 `모든 사용자` 접근으로 시작하는 것이 가장 단순합니다.
+- **앱 설정(Sheet ID, Apps Script URL)은 브라우저 `localStorage`에 기기별로 저장됩니다.** 데스크톱에서 입력해도 스마트폰에는 자동으로 옮겨가지 않습니다. 스마트폰에서 처음 쓸 때 설정 화면에서 같은 `Apps Script Web App URL`을 한 번 더 입력하고 `설정 저장`을 눌러야 저장이 동작합니다. 설정 화면 상단의 상태 배지로 이 기기에 연결됐는지 확인할 수 있습니다.
 
-## 배포
+## 배포 (Vercel)
 
-Vercel에 올릴 수 있는 정적 Vite 앱입니다. 현재 환경에는 Vercel CLI가 설치되어 있지 않습니다. 배포와 로그 확인까지 자동화하려면 다음 설치가 필요합니다.
+이 앱은 Vercel에 배포합니다. 빌드 설정은 `vercel.json`에 있고(`framework: vite`, build `npm run build`, output `dist`), `api/` 폴더의 `.js` 파일이 서버리스 함수로 자동 인식됩니다.
+
+### Vercel CLI로 프로젝트 생성 및 배포
 
 ```bash
-npm i -g vercel
+npm i -g vercel        # 또는 npx vercel 사용
+vercel login           # 최초 1회, 대화형 로그인 (직접 실행 필요)
+vercel link            # 이 폴더를 Vercel 프로젝트에 연결(또는 신규 생성)
+vercel                 # 프리뷰 배포
+vercel --prod          # 운영 배포
 ```
 
-설치 후에는 `vercel deploy` 또는 Vercel Git 연동으로 배포할 수 있습니다.
+배포 전후로 환경변수(`GEMINI_API_KEY`, `GEMINI_MODEL`)를 Vercel 프로젝트에 추가해야 AI 스캔이 동작합니다(위 "Vercel 환경변수 설정" 참고). 환경변수를 추가/변경한 뒤에는 다시 배포해야 반영됩니다.
+
+Git 연동(GitHub 저장소를 Vercel에 import)으로 푸시 시 자동 배포되게 설정할 수도 있습니다.

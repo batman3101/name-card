@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-leader-v1';
+const CACHE_NAME = 'card-leader-v2';
 const APP_ASSETS = [
   '/',
   '/manifest.webmanifest',

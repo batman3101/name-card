@@ -1,11 +1,8 @@
+// Vercel serverless function: sends a business card image to Gemini and returns structured contact JSON.
+// GEMINI_API_KEY stays server-side (never exposed to the client bundle).
+
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Origin': '*',
-};
 
 const contactSchema = {
   type: 'object',
@@ -24,17 +21,6 @@ const contactSchema = {
   required: ['name', 'company', 'position', 'phone', 'email', 'address', 'tags', 'memo', 'confidence', 'rawText'],
   additionalProperties: false,
 };
-
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: {
-      ...CORS_HEADERS,
-      'Content-Type': 'application/json; charset=utf-8',
-    },
-    body: JSON.stringify(body),
-  };
-}
 
 function readGeminiText(response) {
   return response?.candidates?.[0]?.content?.parts
@@ -69,26 +55,26 @@ function normalizeContact(value) {
   };
 }
 
-export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return json(204, {});
-  if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'POST only.' });
+export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST only.' });
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return json(503, {
+    return res.status(503).json({
       ok: false,
-      error: 'GEMINI_API_KEY is not configured in Netlify Functions environment variables.',
+      error: 'GEMINI_API_KEY is not configured in the Vercel project environment variables.',
     });
   }
 
   try {
-    const payload = JSON.parse(event.body || '{}');
+    const payload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
     const imageBase64 = String(payload.imageBase64 || '');
     const mimeType = String(payload.mimeType || 'image/jpeg');
 
-    if (!imageBase64) return json(400, { ok: false, error: 'imageBase64 is required.' });
-    if (!mimeType.startsWith('image/')) return json(400, { ok: false, error: 'mimeType must be an image type.' });
-    if (imageBase64.length > 18_000_000) return json(413, { ok: false, error: 'Image payload is too large.' });
+    if (!imageBase64) return res.status(400).json({ ok: false, error: 'imageBase64 is required.' });
+    if (!mimeType.startsWith('image/')) return res.status(400).json({ ok: false, error: 'mimeType must be an image type.' });
+    if (imageBase64.length > 6_000_000) return res.status(413).json({ ok: false, error: 'Image payload is too large.' });
 
     const geminiResponse = await fetch(GEMINI_ENDPOINT, {
       method: 'POST',
@@ -129,7 +115,7 @@ export const handler = async (event) => {
 
     const geminiJson = await geminiResponse.json();
     if (!geminiResponse.ok) {
-      return json(geminiResponse.status, {
+      return res.status(geminiResponse.status).json({
         ok: false,
         error: geminiJson?.error?.message || 'Gemini API request failed.',
       });
@@ -137,11 +123,11 @@ export const handler = async (event) => {
 
     const text = readGeminiText(geminiJson);
     const contact = normalizeContact(parseJsonText(text));
-    return json(200, { ok: true, model: MODEL, contact });
+    return res.status(200).json({ ok: true, model: MODEL, contact });
   } catch (error) {
-    return json(500, {
+    return res.status(500).json({
       ok: false,
       error: error instanceof Error ? error.message : String(error),
     });
   }
-};
+}

@@ -1,19 +1,5 @@
-const CORS_HEADERS = {
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Origin': '*',
-};
-
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: {
-      ...CORS_HEADERS,
-      'Content-Type': 'application/json; charset=utf-8',
-    },
-    body: JSON.stringify(body),
-  };
-}
+// Vercel serverless function: relays contact upsert/delete to the Apps Script web app.
+// Keeps the Apps Script URL handling server-side and verifies the response.
 
 function assertAppsScriptUrl(endpoint) {
   let url;
@@ -28,21 +14,21 @@ function assertAppsScriptUrl(endpoint) {
   }
 }
 
-export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return json(204, {});
-  if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'POST only.' });
+export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST only.' });
 
   try {
-    const payload = JSON.parse(event.body || '{}');
+    const payload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
     const endpoint = String(payload.endpoint || '').trim();
     const action = String(payload.action || 'upsert');
     const contact = payload.contact;
     const id = String(payload.id || contact?.id || '').trim();
 
-    if (!endpoint) return json(400, { ok: false, error: 'Apps Script Web App URL이 필요합니다.' });
-    if (action === 'delete' && !id) return json(400, { ok: false, error: '삭제할 연락처 ID가 없습니다.' });
+    if (!endpoint) return res.status(400).json({ ok: false, error: 'Apps Script Web App URL이 필요합니다.' });
+    if (action === 'delete' && !id) return res.status(400).json({ ok: false, error: '삭제할 연락처 ID가 없습니다.' });
     if (action !== 'delete' && (!contact || typeof contact !== 'object')) {
-      return json(400, { ok: false, error: '저장할 연락처 데이터가 없습니다.' });
+      return res.status(400).json({ ok: false, error: '저장할 연락처 데이터가 없습니다.' });
     }
 
     assertAppsScriptUrl(endpoint);
@@ -74,7 +60,7 @@ export const handler = async (event) => {
       throw new Error(result.error || `Apps Script 저장 실패: HTTP ${response.status}`);
     }
 
-    return json(200, {
+    return res.status(200).json({
       ok: true,
       action: result.action || action,
       id: result.id,
@@ -82,9 +68,9 @@ export const handler = async (event) => {
       deleted: Boolean(result.deleted),
     });
   } catch (error) {
-    return json(500, {
+    return res.status(500).json({
       ok: false,
       error: error instanceof Error ? error.message : String(error),
     });
   }
-};
+}

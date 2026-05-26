@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowLeft,
   Camera,
   CheckCircle2,
   Copy,
@@ -13,7 +14,6 @@ import {
   Save,
   Search,
   Settings,
-  Sheet,
   Sparkles,
   Users,
   Tag,
@@ -28,6 +28,8 @@ import { createPreviewImage, preprocessImage } from './lib/imageProcessing';
 import { DEFAULT_SHEET_ID, createAppsScriptTemplate, deleteFromGoogleSheet, getSheetUrl, saveToGoogleSheet } from './lib/sheets';
 import { loadContacts, loadEndpoint, loadSheetId, storeContacts, storeEndpoint, storeSheetId } from './lib/storage';
 import type { Contact, OcrStatus } from './types';
+
+type View = 'home' | 'capture' | 'settings';
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
@@ -104,10 +106,9 @@ function StatusPill({ contact, duplicate }: { contact: Contact; duplicate: boole
 export default function App() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
-  const contactsRef = useRef<HTMLDivElement>(null);
-  const settingsRef = useRef<HTMLDivElement>(null);
   const imageUrlRef = useRef('');
   const previewRequestRef = useRef(0);
+  const [view, setView] = useState<View>('home');
   const [contacts, setContacts] = useState<Contact[]>(() => loadContacts());
   const [draft, setDraft] = useState<Contact>(() => emptyDraft());
   const [sourceText, setSourceText] = useState('');
@@ -119,7 +120,6 @@ export default function App() {
   const [sheetId, setSheetId] = useState(() => loadSheetId(DEFAULT_SHEET_ID));
   const [sheetIdDraft, setSheetIdDraft] = useState(() => loadSheetId(DEFAULT_SHEET_ID));
   const [settingsState, setSettingsState] = useState<'idle' | 'dirty' | 'saved'>('idle');
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [ocrStatus, setOcrStatus] = useState<OcrStatus>({ label: '대기 중', progress: 0 });
   const [isReading, setIsReading] = useState(false);
@@ -166,23 +166,39 @@ export default function App() {
     uploadInputRef.current?.click();
   }
 
-  function showContacts() {
-    contactsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function goHome() {
+    setView('home');
+    setConfirmingDeleteId('');
   }
 
-  function showEditor() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  function openSettings() {
+    setView('settings');
   }
 
-  function showSettings() {
-    setSettingsOpen(true);
-    window.setTimeout(() => settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+  function discardCapture() {
+    setImageFile(null);
+    if (imageUrlRef.current) {
+      URL.revokeObjectURL(imageUrlRef.current);
+      imageUrlRef.current = '';
+    }
+    setImageUrl('');
+    setRotation(0);
+    setDraft(emptyDraft());
+    setSourceText('');
+    setAiMessage('');
+    setOcrStatus({ label: '대기 중', progress: 0 });
+    setSaveState('idle');
+    setSaveMessage('');
+    setView('home');
   }
 
   function handleSelectedFile(file: File | undefined) {
     if (file) {
       setImageFile(file);
       setRotation(0);
+      setSaveState('idle');
+      setSaveMessage('');
+      setView('capture');
       void refreshPreview(file, 0);
       void readBusinessCard(file, 0);
     }
@@ -292,6 +308,13 @@ export default function App() {
   }
 
   async function saveDraft() {
+    if (!endpoint.trim()) {
+      setSaveState('error');
+      setSaveMessage('설정에서 Apps Script Web App URL을 입력하고 `설정 저장`을 누르세요.');
+      openSettings();
+      return;
+    }
+
     const contact = { ...draft, sourceText, createdAt: draft.createdAt || new Date().toISOString() };
     setSaveState('saving');
     setSaveMessage(isEditingExisting ? 'Google Sheets 수정 확인 중' : 'Google Sheets 저장 확인 중');
@@ -306,6 +329,15 @@ export default function App() {
       setSaveMessage(isEditingExisting ? 'Google Sheets 수정 확인됨' : 'Google Sheets 저장 확인됨');
       setDraft(emptyDraft());
       setSourceText('');
+      setImageFile(null);
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
+        imageUrlRef.current = '';
+      }
+      setImageUrl('');
+      setRotation(0);
+      setAiMessage('');
+      setView('home');
     } catch (error) {
       console.error(error);
       setSaveState('error');
@@ -313,12 +345,17 @@ export default function App() {
     }
   }
 
-  async function editContact(contact: Contact) {
+  function editContact(contact: Contact) {
     setDraft(contact);
     setSourceText(contact.sourceText || '');
+    setImageFile(null);
+    setImageUrl('');
+    setRotation(0);
+    setAiMessage('');
+    setOcrStatus({ label: '편집 모드', progress: contact.confidence });
     setSaveState('idle');
     setSaveMessage('편집 모드입니다. 수정 후 `수정 저장`을 누르세요.');
-    showEditor();
+    setView('capture');
   }
 
   function requestDelete(contact: Contact) {
@@ -331,6 +368,14 @@ export default function App() {
 
   async function deleteContact(contact: Contact) {
     setConfirmingDeleteId('');
+
+    if (!endpoint.trim()) {
+      setSaveState('error');
+      setSaveMessage('설정에서 Apps Script Web App URL을 입력하고 `설정 저장`을 누르세요.');
+      openSettings();
+      return;
+    }
+
     setDeletingId(contact.id);
     setSaveState('saving');
     setSaveMessage('Google Sheets 삭제 확인 중');
@@ -415,196 +460,49 @@ export default function App() {
           event.target.value = '';
         }}
       />
+
       <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark">
-            <img src="/profile-icon-64.png" alt="" />
-          </span>
-          <div>
-            <strong>Card Leader</strong>
-            <small>무료 OCR 명함 관리 PWA</small>
+        {view === 'home' ? (
+          <div className="brand">
+            <span className="brand-mark">
+              <img src="/profile-icon-64.png" alt="" />
+            </span>
+            <div>
+              <strong>Card Leader</strong>
+              <small>무료 OCR 명함 관리 PWA</small>
+            </div>
           </div>
-        </div>
-        <button className="icon-button" type="button" onClick={showSettings} aria-label="설정">
-          <Settings size={20} />
-        </button>
+        ) : (
+          <button className="back-button" type="button" onClick={goHome}>
+            <ArrowLeft size={18} />
+            {view === 'settings' ? '설정' : '명함 스캔'}
+          </button>
+        )}
+        {view !== 'settings' && (
+          <button className="icon-button" type="button" onClick={openSettings} aria-label="설정">
+            <Settings size={20} />
+          </button>
+        )}
       </header>
 
-      <nav className="mode-tabs" aria-label="주요 기능">
-        <button className="active" type="button" onClick={triggerCamera}>
-          <Camera size={17} />
-          스캔
-        </button>
-        <button type="button" onClick={triggerUpload}>
-          <Upload size={17} />
-          업로드
-        </button>
-        <button type="button" onClick={showContacts}>
-          <Users size={17} />
-          최근
-        </button>
-      </nav>
-
-      <section className="workspace">
-        <div className="capture-panel">
-          <div className="panel-heading">
-            <div>
-              <h1>명함 촬영 후 Sheets에 저장</h1>
-              <p>사진을 넣으면 로컬 OCR로 텍스트를 읽고 이름, 회사, 연락처를 자동 분리합니다.</p>
-            </div>
-            <StatusPill contact={draft} duplicate={duplicate} />
-          </div>
-
-          <div className="dropzone">
-            <div className="preview-frame">
-              {imageUrl ? (
-                <img src={imageUrl} alt="업로드된 명함" />
-              ) : (
-                <FileImage size={52} />
-              )}
-            </div>
-            <div className="dropzone-copy">
-              <strong>명함 사진 선택 또는 촬영</strong>
-              <span>한국어, 영어, 베트남어 OCR 언어팩을 사용합니다.</span>
-            </div>
-            <div className="dropzone-actions">
-              <button className="button-like" type="button" onClick={triggerCamera}>
-                <Camera size={16} />
-                스캔
-              </button>
-              <button className="secondary-button compact-button" type="button" onClick={triggerUpload}>
-                <Upload size={16} />
-                업로드
-              </button>
-              {imageFile && (
-                <>
-                  <button className="secondary-button compact-button" type="button" onClick={rotateImage}>
-                    <RotateCw size={16} />
-                    90도 회전
-                  </button>
-                  <button className="secondary-button compact-button" type="button" onClick={rereadRotatedImage} disabled={isReading}>
-                    {isReading ? <Loader2 className="spin" size={16} /> : <Sparkles size={16} />}
-                    회전 후 OCR
-                  </button>
-                  <button className="ai-button compact-button" type="button" onClick={readBusinessCardWithAi} disabled={isAiReading}>
-                    {isAiReading ? <Loader2 className="spin" size={16} /> : <Sparkles size={16} />}
-                    AI 스캔
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {aiMessage && <p className={`ai-message ${isAiReading ? 'loading' : ''}`}>{aiMessage}</p>}
-
-          <div className="ocr-meter">
-            <div>
-              {isReading ? <Loader2 className="spin" size={18} /> : <Camera size={18} />}
-              <span>{ocrStatus.label}</span>
-            </div>
-            <progress value={ocrStatus.progress} max="100" aria-label={`OCR 진행 ${ocrStatus.progress}%: ${ocrStatus.label}`} />
-          </div>
-
-          <div className="form-grid">
-            <Field label="이름" value={draft.name} onChange={(value) => updateDraft('name', value)} placeholder="Bruce Wayne" />
-            <Field label="회사" value={draft.company} onChange={(value) => updateDraft('company', value)} placeholder="ALMUS TECH" />
-            <Field label="직책" value={draft.position} onChange={(value) => updateDraft('position', value)} placeholder="Manager" />
-            <Field label="전화" value={draft.phone} onChange={(value) => updateDraft('phone', value)} placeholder="010-1234-5678" />
-            <Field label="이메일" value={draft.email} onChange={(value) => updateDraft('email', value)} placeholder="name@company.com" />
-            <Field label="태그" value={draft.tags} onChange={(value) => updateDraft('tags', value)} placeholder="전시회, 구매, 베트남" />
-          </div>
-
-          <label className="field address-field">
-            <span>주소</span>
-            <textarea
-              value={draft.address}
-              onChange={(event) => updateDraft('address', event.target.value)}
-              placeholder="회사 주소"
-            />
-          </label>
-
-          <label className="field memo-field">
-            <span>메모</span>
-            <textarea value={draft.memo} onChange={(event) => updateDraft('memo', event.target.value)} placeholder="미팅 내용, 후속 조치" />
-          </label>
-
-          <div className="actions">
-            <button className="secondary-button" type="button" onClick={parseEditedText}>
-              <Sparkles size={16} />
-              텍스트 재파싱
+      {view === 'home' && (
+        <section className="view view-home">
+          <div className="home-actions">
+            <button className="primary-button" type="button" onClick={triggerCamera}>
+              <Camera size={18} />
+              명함 스캔
             </button>
-            <button className="primary-button" type="button" onClick={saveDraft} disabled={saveState === 'saving'}>
-              {saveState === 'saving' ? <Loader2 className="spin" size={17} /> : <Save size={17} />}
-              {saveState === 'saved' ? '저장 완료' : isEditingExisting ? '수정 저장' : 'Sheets 저장'}
+            <button className="secondary-button" type="button" onClick={triggerUpload}>
+              <Upload size={18} />
+              이미지 업로드
             </button>
           </div>
 
-          {saveMessage && (
-            <p className={`save-message ${saveState === 'error' ? 'error' : saveState === 'saved' ? 'success' : ''}`}>
-              {saveMessage}
-            </p>
-          )}
-        </div>
-
-        <aside className="side-panel">
-          {settingsOpen && (
-            <div className="settings-box" ref={settingsRef}>
-              <div className="panel-heading compact">
-                <h2>Google Sheets 연결</h2>
-                <button className="icon-button muted" type="button" onClick={copyScript} aria-label="Apps Script 복사">
-                  <Copy size={16} />
-                </button>
-              </div>
-              <div className="sheet-target">
-                <span>저장 대상</span>
-                <strong>{sheetId}</strong>
-                <a href={sheetUrl} target="_blank" rel="noreferrer">
-                  시트 열기
-                  <ExternalLink size={14} />
-                </a>
-              </div>
-              <label className="field">
-                <span>Google Sheet ID</span>
-                <textarea
-                  className="settings-textarea"
-                  value={sheetIdDraft}
-                  onChange={(event) => updateSheetIdDraft(event.target.value)}
-                  placeholder="Google Sheet ID"
-                  spellCheck={false}
-                />
-              </label>
-              <label className="field">
-                <span>Apps Script Web App URL</span>
-                <textarea
-                  className="settings-textarea"
-                  value={endpointDraft}
-                  onChange={(event) => updateEndpointDraft(event.target.value)}
-                  placeholder="https://script.google.com/macros/s/..."
-                  spellCheck={false}
-                />
-              </label>
-              <div className="settings-actions">
-                <button className="primary-button" type="button" onClick={saveSettings}>
-                  <Save size={16} />
-                  설정 저장
-                </button>
-                <span className={`settings-status ${settingsState}`}>
-                  {settingsState === 'saved' ? '저장됨' : settingsState === 'dirty' ? '저장 필요' : '대기 중'}
-                </span>
-              </div>
-              <pre className="code-preview">{scriptTemplate}</pre>
-            </div>
+          {saveState === 'saved' && saveMessage && (
+            <p className="save-message success">{saveMessage}</p>
           )}
 
-          <div className="raw-text-box">
-            <div className="panel-heading compact">
-              <h2>OCR 원문</h2>
-              <span>{draft.confidence}%</span>
-            </div>
-            <textarea value={sourceText} onChange={(event) => setSourceText(event.target.value)} />
-          </div>
-
-          <div className="contacts-box" ref={contactsRef}>
+          <div className="contacts-box">
             <div className="panel-heading compact">
               <h2>최근 연락처</h2>
               <span>{contacts.length}</span>
@@ -618,11 +516,11 @@ export default function App() {
                 <div className="empty-state">
                   <Download size={22} />
                   <strong>저장된 연락처가 없습니다</strong>
-                  <span>첫 명함을 저장하면 여기에 표시됩니다.</span>
+                  <span>명함을 스캔해 저장하면 여기에 표시됩니다.</span>
                 </div>
               ) : (
                 filteredContacts.map((contact) => (
-                  <article className={`contact-row ${contact.id === draft.id ? 'editing' : ''}`} key={contact.id}>
+                  <article className="contact-row" key={contact.id}>
                     <span className="avatar">{contact.name.slice(0, 1) || '?'}</span>
                     <button className="contact-main" type="button" onClick={() => editContact(contact)}>
                       <strong>{contact.name || '이름 없음'}</strong>
@@ -660,23 +558,208 @@ export default function App() {
               )}
             </div>
           </div>
-        </aside>
-      </section>
+        </section>
+      )}
 
-      <nav className="bottom-nav" aria-label="모바일 하단 메뉴">
-        <button className="active" type="button" onClick={triggerCamera}>
+      {view === 'capture' && (
+        <section className="view view-capture">
+          <div className="capture-panel">
+            <div className="panel-heading compact">
+              <StatusPill contact={draft} duplicate={duplicate} />
+            </div>
+
+            <div className="dropzone">
+              <div className="preview-frame">
+                {imageUrl ? (
+                  <img src={imageUrl} alt="업로드된 명함" />
+                ) : (
+                  <FileImage size={52} />
+                )}
+              </div>
+              <div className="dropzone-actions">
+                <button className="button-like" type="button" onClick={triggerCamera}>
+                  <Camera size={16} />
+                  스캔
+                </button>
+                <button className="secondary-button compact-button" type="button" onClick={triggerUpload}>
+                  <Upload size={16} />
+                  업로드
+                </button>
+                {imageFile && (
+                  <>
+                    <button className="secondary-button compact-button" type="button" onClick={rotateImage}>
+                      <RotateCw size={16} />
+                      90도 회전
+                    </button>
+                    <button className="secondary-button compact-button" type="button" onClick={rereadRotatedImage} disabled={isReading}>
+                      {isReading ? <Loader2 className="spin" size={16} /> : <Sparkles size={16} />}
+                      회전 후 OCR
+                    </button>
+                    <button className="ai-button compact-button" type="button" onClick={readBusinessCardWithAi} disabled={isAiReading}>
+                      {isAiReading ? <Loader2 className="spin" size={16} /> : <Sparkles size={16} />}
+                      AI 스캔
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {aiMessage && <p className={`ai-message ${isAiReading ? 'loading' : ''}`}>{aiMessage}</p>}
+
+            {imageFile && (
+              <div className="ocr-meter">
+                <div>
+                  {isReading ? <Loader2 className="spin" size={18} /> : <Camera size={18} />}
+                  <span>{ocrStatus.label}</span>
+                </div>
+                <progress value={ocrStatus.progress} max="100" aria-label={`OCR 진행 ${ocrStatus.progress}%: ${ocrStatus.label}`} />
+              </div>
+            )}
+
+            <div className="form-grid">
+              <Field label="이름" value={draft.name} onChange={(value) => updateDraft('name', value)} placeholder="이름" />
+              <Field label="회사" value={draft.company} onChange={(value) => updateDraft('company', value)} placeholder="회사" />
+              <Field label="직책" value={draft.position} onChange={(value) => updateDraft('position', value)} placeholder="직책" />
+              <Field label="전화" value={draft.phone} onChange={(value) => updateDraft('phone', value)} placeholder="010-0000-0000" />
+              <Field label="이메일" value={draft.email} onChange={(value) => updateDraft('email', value)} placeholder="name@company.com" />
+              <Field label="태그" value={draft.tags} onChange={(value) => updateDraft('tags', value)} placeholder="전시회, 구매, 베트남" />
+            </div>
+
+            <label className="field address-field">
+              <span>주소</span>
+              <textarea
+                value={draft.address}
+                onChange={(event) => updateDraft('address', event.target.value)}
+                placeholder="회사 주소"
+              />
+            </label>
+
+            <label className="field memo-field">
+              <span>메모</span>
+              <textarea value={draft.memo} onChange={(event) => updateDraft('memo', event.target.value)} placeholder="미팅 내용, 후속 조치" />
+            </label>
+
+            <div className="actions">
+              <button className="secondary-button" type="button" onClick={parseEditedText}>
+                <Sparkles size={16} />
+                텍스트 재파싱
+              </button>
+              <button className="primary-button" type="button" onClick={saveDraft} disabled={saveState === 'saving'}>
+                {saveState === 'saving' ? <Loader2 className="spin" size={17} /> : <Save size={17} />}
+                {isEditingExisting ? '수정 저장' : 'Sheets 저장'}
+              </button>
+            </div>
+
+            {saveMessage && saveState !== 'saved' && (
+              <p className={`save-message ${saveState === 'error' ? 'error' : ''}`}>{saveMessage}</p>
+            )}
+          </div>
+
+          <div className="raw-text-box">
+            <div className="panel-heading compact">
+              <h2>OCR 원문</h2>
+              <span>{draft.confidence}%</span>
+            </div>
+            <textarea value={sourceText} onChange={(event) => setSourceText(event.target.value)} placeholder="OCR 또는 AI 스캔 결과 원문이 여기에 표시됩니다." />
+          </div>
+
+          <button className="ghost-button" type="button" onClick={discardCapture}>
+            목록으로 돌아가기
+          </button>
+        </section>
+      )}
+
+      {view === 'settings' && (
+        <section className="view view-settings">
+          <div className="settings-box">
+            <div className="panel-heading compact">
+              <h2>Google Sheets 연결</h2>
+              <button className="icon-button muted" type="button" onClick={copyScript} aria-label="Apps Script 복사">
+                <Copy size={16} />
+              </button>
+            </div>
+
+            <div className="sheet-target">
+              <span>저장 대상 Sheet</span>
+              <strong>{sheetId}</strong>
+              <a href={sheetUrl} target="_blank" rel="noreferrer">
+                시트 열기
+                <ExternalLink size={14} />
+              </a>
+            </div>
+
+            <div className={`applied-status ${endpoint.trim() ? 'ok' : 'missing'}`}>
+              {endpoint.trim() ? (
+                <>
+                  <CheckCircle2 size={15} />
+                  <span>이 기기에 저장 연결됨</span>
+                  <small>{endpoint}</small>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle size={15} />
+                  <span>이 기기에는 아직 Apps Script URL이 없습니다</span>
+                  <small>아래에 입력하고 `설정 저장`을 누르면 저장이 가능합니다. 설정은 기기마다 따로 저장됩니다.</small>
+                </>
+              )}
+            </div>
+
+            <label className="field">
+              <span>Google Sheet ID</span>
+              <textarea
+                className="settings-textarea"
+                value={sheetIdDraft}
+                onChange={(event) => updateSheetIdDraft(event.target.value)}
+                placeholder="Google Sheet ID"
+                spellCheck={false}
+              />
+            </label>
+            <label className="field">
+              <span>Apps Script Web App URL</span>
+              <textarea
+                className="settings-textarea"
+                value={endpointDraft}
+                onChange={(event) => updateEndpointDraft(event.target.value)}
+                placeholder="https://script.google.com/macros/s/..."
+                spellCheck={false}
+              />
+            </label>
+            <div className="settings-actions">
+              <button className="primary-button" type="button" onClick={saveSettings}>
+                <Save size={16} />
+                설정 저장
+              </button>
+              <span className={`settings-status ${settingsState}`}>
+                {settingsState === 'saved' ? '저장됨' : settingsState === 'dirty' ? '저장 필요' : '대기 중'}
+              </span>
+            </div>
+
+            <details className="code-details">
+              <summary>Apps Script 코드 보기</summary>
+              <pre className="code-preview">{scriptTemplate}</pre>
+            </details>
+          </div>
+
+          <button className="ghost-button" type="button" onClick={goHome}>
+            완료
+          </button>
+        </section>
+      )}
+
+      <nav className="bottom-nav" aria-label="주요 메뉴">
+        <button className={view === 'capture' ? 'active' : ''} type="button" onClick={triggerCamera}>
           <Camera size={20} />
           스캔
         </button>
-        <button type="button" onClick={showContacts}>
+        <button type="button" onClick={triggerUpload}>
+          <Upload size={20} />
+          업로드
+        </button>
+        <button className={view === 'home' ? 'active' : ''} type="button" onClick={goHome}>
           <Users size={20} />
           연락처
         </button>
-        <button type="button" onClick={showSettings}>
-          <Sheet size={20} />
-          Sheets
-        </button>
-        <button type="button" onClick={showSettings}>
+        <button className={view === 'settings' ? 'active' : ''} type="button" onClick={openSettings}>
           <Settings size={20} />
           설정
         </button>
