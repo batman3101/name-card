@@ -181,6 +181,23 @@ button {
   width: 100%;
 }
 
+.install-section {
+  display: grid;
+  gap: 8px;
+}
+
+.install-help {
+  background: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius-md);
+  color: var(--color-info-text);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: none;
+  padding: 10px 12px;
+}
+
 .install-banner {
   align-items: center;
   background: var(--color-teal-surface);
@@ -860,35 +877,43 @@ progress {
   white-space: nowrap;
 }
 
-/* Phone + tag, moved under the name as larger tap targets */
-.contact-quick {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-left: 48px;
+/* Phone + tag (row 1) and edit + delete (row 2): one balanced 2-up grid each.
+   All four buttons share the same 1fr column + min-height for equal sizing. */
+.contact-quick,
+.contact-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  min-width: 0;
 }
 
-.quick-btn {
+.quick-btn,
+.contact-actions button {
   align-items: center;
-  background: var(--color-field);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
   display: inline-flex;
   font-size: 13px;
   font-weight: var(--weight-semibold);
   gap: 6px;
-  max-width: 100%;
-  min-height: 40px;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 0;
   overflow: hidden;
-  padding: 0 12px;
+  padding: 0 10px;
   text-decoration: none;
   white-space: nowrap;
+  width: 100%;
 }
 
 .quick-btn span {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.quick-btn {
+  background: var(--color-field);
+  color: var(--color-text-secondary);
 }
 
 .quick-btn.call {
@@ -897,38 +922,19 @@ progress {
   color: var(--color-teal-surface-text);
 }
 
-.quick-btn:hover {
-  border-color: var(--color-border-strong);
-}
-
-.quick-btn:active {
-  transform: translateY(1px) scale(0.99);
-}
-
-.contact-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
 .contact-actions button {
-  align-items: center;
   background: #f8fafc;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
   color: #244250;
-  display: inline-flex;
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  gap: 5px;
-  min-height: 44px;
-  padding: 0 12px;
 }
 
+.quick-btn:hover,
 .contact-actions button:hover {
   border-color: var(--color-border-strong);
+}
+
+.quick-btn:active,
+.contact-actions button:active {
+  transform: translateY(1px) scale(0.99);
 }
 
 .contact-actions button:disabled {

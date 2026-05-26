@@ -140,6 +140,13 @@ export default function App() {
   const [deletingId, setDeletingId] = useState('');
   const [confirmingDeleteId, setConfirmingDeleteId] = useState('');
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installHelp, setInstallHelp] = useState(false);
+  const [isStandalone] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as Navigator & { standalone?: boolean }).standalone === true),
+  );
 
   useEffect(() => {
     return () => {
@@ -164,9 +171,12 @@ export default function App() {
   }, []);
 
   async function installApp() {
-    if (!installEvent) return;
-    await installEvent.prompt();
-    setInstallEvent(null);
+    if (installEvent) {
+      await installEvent.prompt();
+      setInstallEvent(null);
+      return;
+    }
+    setInstallHelp((value) => !value);
   }
 
   const duplicate = useMemo(() => isPossibleDuplicate(draft, contacts), [draft, contacts]);
@@ -518,13 +528,6 @@ export default function App() {
 
       {view === 'home' && (
         <section className="view view-home">
-          {installEvent && (
-            <button className="install-banner" type="button" onClick={installApp}>
-              <Download size={18} />
-              홈 화면에 앱 설치
-            </button>
-          )}
-
           <div className="home-actions">
             <button className="primary-button" type="button" onClick={triggerCamera}>
               <Camera size={18} />
@@ -586,10 +589,6 @@ export default function App() {
                     )}
 
                     <div className="contact-actions">
-                      <button type="button" onClick={() => editContact(contact)} aria-label={`${contact.name || '연락처'} 편집`}>
-                        <Pencil size={15} />
-                        편집
-                      </button>
                       {confirmingDeleteId === contact.id ? (
                         <>
                           <button type="button" className="confirm-delete" onClick={() => deleteContact(contact)} disabled={deletingId === contact.id} aria-label={`${contact.name || '연락처'} 삭제 확인`}>
@@ -601,10 +600,16 @@ export default function App() {
                           </button>
                         </>
                       ) : (
-                        <button type="button" onClick={() => requestDelete(contact)} aria-label={`${contact.name || '연락처'} 삭제`}>
-                          <Trash2 size={15} />
-                          삭제
-                        </button>
+                        <>
+                          <button type="button" onClick={() => editContact(contact)} aria-label={`${contact.name || '연락처'} 편집`}>
+                            <Pencil size={15} />
+                            편집
+                          </button>
+                          <button type="button" onClick={() => requestDelete(contact)} aria-label={`${contact.name || '연락처'} 삭제`}>
+                            <Trash2 size={15} />
+                            삭제
+                          </button>
+                        </>
                       )}
                     </div>
                   </article>
@@ -612,6 +617,22 @@ export default function App() {
               )}
             </div>
           </div>
+
+          {!isStandalone && (
+            <div className="install-section">
+              <button className="install-banner" type="button" onClick={installApp}>
+                <Download size={18} />
+                앱 다운로드 (홈 화면에 설치)
+              </button>
+              {installHelp && (
+                <p className="install-help">
+                  Chrome: 우측 상단 ⋮ 메뉴에서 <b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 선택하세요.
+                  <br />
+                  iPhone Safari: 공유 버튼에서 <b>홈 화면에 추가</b>를 선택하세요.
+                </p>
+              )}
+            </div>
+          )}
         </section>
       )}
 
