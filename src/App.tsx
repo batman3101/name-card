@@ -626,9 +626,13 @@ export default function App() {
               </button>
               {installHelp && (
                 <p className="install-help">
-                  Chrome: 우측 상단 ⋮ 메뉴에서 <b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 선택하세요.
+                  설치 버튼이 바로 안 뜨면, 이 화면을 <b>몇 초 사용한 뒤 새로고침</b>하고 다시 눌러보세요. Chrome은 잠시 사용한 뒤에야 설치를 활성화합니다.
                   <br />
-                  iPhone Safari: 공유 버튼에서 <b>홈 화면에 추가</b>를 선택하세요.
+                  그래도 없으면 Chrome <b>⋮</b> 메뉴를 아래로 스크롤해 <b>앱 설치</b>(또는 <b>홈 화면에 추가</b>)를 선택하세요.
+                  <br />
+                  iPhone Safari: 공유 → <b>홈 화면에 추가</b>.
+                  <br />
+                  항상 <b>card-leader.vercel.app</b> 주소로 접속하세요(긴 임시 주소는 설치 상태가 따로 잡힙니다).
                 </p>
               )}
             </div>
