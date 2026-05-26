@@ -790,16 +790,14 @@ progress {
 }
 
 .contact-row {
-  align-items: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   color: inherit;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  grid-template-columns: 38px minmax(0, 1fr) auto;
-  min-height: 58px;
-  padding: 8px;
+  padding: 10px;
   text-align: left;
   width: 100%;
 }
@@ -809,29 +807,33 @@ progress {
   box-shadow: var(--ring-editing);
 }
 
+.contact-head {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  min-width: 0;
+}
+
 .avatar {
   align-items: center;
   background: var(--color-teal-tint);
   border-radius: var(--radius-md);
   color: var(--color-pine-teal);
   display: inline-flex;
+  flex: 0 0 auto;
   font-weight: var(--weight-bold);
   height: 38px;
   justify-content: center;
   width: 38px;
 }
 
-.contact-main,
-.contact-meta {
-  display: grid;
-  min-width: 0;
-}
-
 .contact-main {
   background: transparent;
   border: 0;
   color: inherit;
-  justify-content: stretch;
+  display: grid;
+  min-width: 0;
   padding: 0;
   text-align: left;
 }
@@ -844,25 +846,69 @@ progress {
 }
 
 .contact-main strong {
-  font-size: 14px;
+  font-size: 15px;
 }
 
-.contact-main small,
-.contact-meta small {
+.contact-main small {
   color: var(--color-text-muted);
   font-size: 12px;
 }
 
-.contact-meta {
+.contact-date {
   color: var(--color-text-muted);
-  justify-items: end;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Phone + tag, moved under the name as larger tap targets */
+.contact-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 48px;
+}
+
+.quick-btn {
+  align-items: center;
+  background: var(--color-field);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  gap: 6px;
+  max-width: 100%;
+  min-height: 40px;
+  overflow: hidden;
+  padding: 0 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.quick-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-btn.call {
+  background: var(--color-teal-surface);
+  border-color: var(--color-teal-surface-border);
+  color: var(--color-teal-surface-text);
+}
+
+.quick-btn:hover {
+  border-color: var(--color-border-strong);
+}
+
+.quick-btn:active {
+  transform: translateY(1px) scale(0.99);
 }
 
 .contact-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  grid-column: 2 / 4;
   justify-content: flex-end;
   min-width: 0;
 }

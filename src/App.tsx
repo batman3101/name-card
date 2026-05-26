@@ -36,6 +36,11 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
+function telHref(phone: string) {
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  return `tel:${cleaned}`;
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', {
     month: 'short',
@@ -554,17 +559,33 @@ export default function App() {
               ) : (
                 filteredContacts.map((contact) => (
                   <article className="contact-row" key={contact.id}>
-                    <span className="avatar">{contact.name.slice(0, 1) || '?'}</span>
-                    <button className="contact-main" type="button" onClick={() => editContact(contact)}>
-                      <strong>{contact.name || '이름 없음'}</strong>
-                      <small>{contact.company || contact.email || '회사 정보 없음'}</small>
-                    </button>
-                    <span className="contact-meta">
-                      <small>{formatDate(contact.createdAt)}</small>
-                      {contact.phone && <Phone size={14} />}
-                      {contact.tags && <Tag size={14} />}
-                    </span>
-                    <span className="contact-actions">
+                    <div className="contact-head">
+                      <span className="avatar">{contact.name.slice(0, 1) || '?'}</span>
+                      <button className="contact-main" type="button" onClick={() => editContact(contact)}>
+                        <strong>{contact.name || '이름 없음'}</strong>
+                        <small>{contact.company || contact.email || '회사 정보 없음'}</small>
+                      </button>
+                      <small className="contact-date">{formatDate(contact.createdAt)}</small>
+                    </div>
+
+                    {(contact.phone || contact.tags) && (
+                      <div className="contact-quick">
+                        {contact.phone && (
+                          <a className="quick-btn call" href={telHref(contact.phone)} aria-label={`${contact.name || '연락처'}에게 전화 걸기`}>
+                            <Phone size={16} />
+                            <span>{contact.phone}</span>
+                          </a>
+                        )}
+                        {contact.tags && (
+                          <button className="quick-btn" type="button" onClick={() => setQuery(contact.tags)} aria-label={`태그 ${contact.tags}로 검색`}>
+                            <Tag size={16} />
+                            <span>{contact.tags}</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="contact-actions">
                       <button type="button" onClick={() => editContact(contact)} aria-label={`${contact.name || '연락처'} 편집`}>
                         <Pencil size={15} />
                         편집
@@ -585,7 +606,7 @@ export default function App() {
                           삭제
                         </button>
                       )}
-                    </span>
+                    </div>
                   </article>
                 ))
               )}
