@@ -169,6 +169,7 @@ export default function App() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMessage, setSaveMessage] = useState('');
   const [deletingId, setDeletingId] = useState('');
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState('');
 
   useEffect(() => {
     return () => {
@@ -361,10 +362,16 @@ export default function App() {
     showEditor();
   }
 
-  async function deleteContact(contact: Contact) {
-    const confirmed = window.confirm(`${contact.name || contact.company || '이 연락처'}를 삭제할까요?`);
-    if (!confirmed) return;
+  function requestDelete(contact: Contact) {
+    setConfirmingDeleteId(contact.id);
+  }
 
+  function cancelDelete() {
+    setConfirmingDeleteId('');
+  }
+
+  async function deleteContact(contact: Contact) {
+    setConfirmingDeleteId('');
     setDeletingId(contact.id);
     setSaveState('saving');
     setSaveMessage('Google Sheets 삭제 확인 중');
@@ -536,7 +543,7 @@ export default function App() {
               {isReading ? <Loader2 className="spin" size={18} /> : <Camera size={18} />}
               <span>{ocrStatus.label}</span>
             </div>
-            <progress value={ocrStatus.progress} max="100" />
+            <progress value={ocrStatus.progress} max="100" aria-label={`OCR 진행 ${ocrStatus.progress}%: ${ocrStatus.label}`} />
           </div>
 
           <div className="form-grid">
@@ -672,10 +679,22 @@ export default function App() {
                         <Pencil size={15} />
                         편집
                       </button>
-                      <button type="button" onClick={() => deleteContact(contact)} disabled={deletingId === contact.id} aria-label={`${contact.name || '연락처'} 삭제`}>
-                        {deletingId === contact.id ? <Loader2 className="spin" size={15} /> : <Trash2 size={15} />}
-                        삭제
-                      </button>
+                      {confirmingDeleteId === contact.id ? (
+                        <>
+                          <button type="button" className="confirm-delete" onClick={() => deleteContact(contact)} disabled={deletingId === contact.id} aria-label={`${contact.name || '연락처'} 삭제 확인`}>
+                            {deletingId === contact.id ? <Loader2 className="spin" size={15} /> : <Trash2 size={15} />}
+                            삭제 확인
+                          </button>
+                          <button type="button" onClick={cancelDelete} aria-label="삭제 취소">
+                            취소
+                          </button>
+                        </>
+                      ) : (
+                        <button type="button" onClick={() => requestDelete(contact)} aria-label={`${contact.name || '연락처'} 삭제`}>
+                          <Trash2 size={15} />
+                          삭제
+                        </button>
+                      )}
                     </span>
                   </article>
                 ))

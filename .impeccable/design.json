@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-26T00:00:00Z",
+  "title": "Design System: Card Leader",
+  "extensions": {
+    "colorMeta": {
+      "pine-teal": {
+        "role": "primary",
+        "displayName": "Deep Pine Teal",
+        "canonical": "oklch(45.5% 0.062 207)",
+        "tonalRamp": [
+          "oklch(20% 0.04 207)",
+          "oklch(28% 0.05 207)",
+          "oklch(36% 0.058 207)",
+          "oklch(45.5% 0.062 207)",
+          "oklch(56% 0.06 207)",
+          "oklch(68% 0.05 207)",
+          "oklch(82% 0.035 207)",
+          "oklch(95% 0.015 207)"
+        ]
+      },
+      "pine-teal-deep": {
+        "role": "primary",
+        "displayName": "Pine Teal Deep",
+        "canonical": "oklch(31% 0.045 213)",
+        "tonalRamp": [
+          "oklch(18% 0.03 213)",
+          "oklch(24% 0.04 213)",
+          "oklch(31% 0.045 213)",
+          "oklch(40% 0.05 213)",
+          "oklch(52% 0.05 213)",
+          "oklch(66% 0.042 213)",
+          "oklch(81% 0.03 213)",
+          "oklch(94% 0.012 213)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(24% 0.018 240)",
+        "tonalRamp": [
+          "oklch(15% 0.015 240)",
+          "oklch(24% 0.018 240)",
+          "oklch(34% 0.018 240)",
+          "oklch(45% 0.016 240)",
+          "oklch(58% 0.014 240)",
+          "oklch(72% 0.01 240)",
+          "oklch(86% 0.006 240)",
+          "oklch(96% 0.004 240)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "oklch(97.7% 0.004 230)",
+        "tonalRamp": [
+          "oklch(90% 0.006 230)",
+          "oklch(92.5% 0.005 230)",
+          "oklch(95% 0.005 230)",
+          "oklch(97.7% 0.004 230)",
+          "oklch(98.5% 0.003 230)",
+          "oklch(99% 0.002 230)",
+          "oklch(99.5% 0.001 230)",
+          "oklch(100% 0 0)"
+        ]
+      },
+      "muted-text": {
+        "role": "neutral",
+        "displayName": "Muted Text",
+        "canonical": "oklch(50% 0.022 245)",
+        "note": "AA-safe replacement (5.97:1 on white) for current code's lighter grays (#6c7b89, #687584) which fail 4.5:1 at 12px.",
+        "tonalRamp": [
+          "oklch(28% 0.02 245)",
+          "oklch(38% 0.022 245)",
+          "oklch(50% 0.022 245)",
+          "oklch(60% 0.02 245)",
+          "oklch(70% 0.016 245)",
+          "oklch(80% 0.012 245)",
+          "oklch(89% 0.007 245)",
+          "oklch(96% 0.004 245)"
+        ]
+      },
+      "teal-tint": {
+        "role": "tertiary",
+        "displayName": "Teal Tint",
+        "canonical": "oklch(93% 0.028 195)",
+        "tonalRamp": [
+          "oklch(45% 0.05 195)",
+          "oklch(58% 0.05 195)",
+          "oklch(70% 0.045 195)",
+          "oklch(80% 0.04 195)",
+          "oklch(88% 0.032 195)",
+          "oklch(93% 0.028 195)",
+          "oklch(96% 0.018 195)",
+          "oklch(98.5% 0.008 195)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "캡처 패널의 단일 h1. 화면당 하나." },
+      "title": { "displayName": "Title", "purpose": "사이드 패널 섹션 제목." },
+      "body": { "displayName": "Body", "purpose": "설명 문단과 입력값. 65~75ch 이내." },
+      "label": { "displayName": "Label", "purpose": "필드 라벨, 상태 알약, 내비. 굵은 기능 텍스트 전용." }
+    },
+    "shadows": [
+      { "name": "panel-ambient", "value": "0 18px 42px rgba(20, 32, 43, 0.07)", "purpose": "패널·카드가 캔버스에서 떠오르는 기본 깊이." },
+      { "name": "hover-lift", "value": "0 8px 20px rgba(16, 45, 60, 0.1)", "purpose": "버튼 호버 시 짧은 반응(translateY(-1px) 동반)." },
+      { "name": "editing-ring", "value": "0 0 0 2px rgba(12, 102, 113, 0.12)", "purpose": "편집 중인 연락처 행 표시." },
+      { "name": "focus-ring", "value": "0 0 0 3px rgba(12, 102, 113, 0.35)", "purpose": "모든 인터랙티브 요소의 보이는 키보드 포커스." }
+    ],
+    "motion": [
+      { "name": "control-transition", "value": "150ms ease", "purpose": "버튼 보더·그림자·transform 상태 전환." },
+      { "name": "spin", "value": "850ms linear infinite", "purpose": "로딩 스피너 회전." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "860px", "purpose": "모드 탭·하단 내비 등장, 워크스페이스 단일 컬럼." },
+      { "name": "phone", "value": "520px", "purpose": "폼 단일 컬럼, 브랜드 부제 숨김, 액션 세로 스택." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button (Sheets 저장)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "화면의 단일 1차 행동. 깊은 청록 채움.",
+      "html": "<button class=\"ds-btn-primary\"><svg class=\"ds-ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z\"/><path d=\"M17 21v-8H7v8M7 3v5h8\"/></svg>Sheets 저장</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 16px; background: #0c6671; color: #fff; border: 1px solid #0c6671; border-radius: 8px; font-weight: 600; cursor: pointer; transition: box-shadow 150ms ease, transform 150ms ease; } .ds-btn-primary:hover { box-shadow: 0 8px 20px rgba(16,45,60,0.1); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(12,102,113,0.35); } .ds-btn-primary:disabled { opacity: 0.72; cursor: default; } .ds-ic { width: 17px; height: 17px; }"
+    },
+    {
+      "name": "AI Scan Button",
+      "kind": "button",
+      "refersTo": "button-ai",
+      "description": "Gemini AI 스캔. 더 깊은 청록으로 1차 저장과 구분되는 보조 강조.",
+      "html": "<button class=\"ds-btn-ai\"><svg class=\"ds-ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3l1.9 5.8L19.5 11l-5.6 2.2L12 19l-1.9-5.8L4.5 11l5.6-2.2L12 3z\"/></svg>AI 스캔</button>",
+      "css": ".ds-btn-ai { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 14px; background: #12343c; color: #fff; border: 1px solid #12343c; border-radius: 8px; font-weight: 600; cursor: pointer; transition: box-shadow 150ms ease, transform 150ms ease; } .ds-btn-ai:hover { box-shadow: 0 8px 20px rgba(16,45,60,0.1); transform: translateY(-1px); } .ds-btn-ai:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(12,102,113,0.35); } .ds-ic { width: 16px; height: 16px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "업로드·회전·재파싱 등 보조 행동. 흰 배경 + 보더.",
+      "html": "<button class=\"ds-btn-secondary\"><svg class=\"ds-ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12\"/></svg>업로드</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 14px; background: #fff; color: #244250; border: 1px solid #cdd8e2; border-radius: 8px; font-weight: 600; cursor: pointer; transition: box-shadow 150ms ease, transform 150ms ease; } .ds-btn-secondary:hover { box-shadow: 0 8px 20px rgba(16,45,60,0.1); transform: translateY(-1px); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(12,102,113,0.35); } .ds-ic { width: 16px; height: 16px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "최근 연락처 검색. 아이콘 + 필드 배경.",
+      "html": "<label class=\"ds-search\"><svg class=\"ds-ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"M21 21l-4.3-4.3\"/></svg><input type=\"text\" placeholder=\"이름, 회사, 전화, 주소, 태그 검색\"/></label>",
+      "css": ".ds-search { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; padding: 0 11px; background: #fbfcfd; border: 1px solid #d4dee7; border-radius: 8px; color: #688094; } .ds-search input { min-height: 43px; border: 0; background: transparent; color: #17202a; outline: none; min-width: 0; } .ds-search:focus-within { border-color: #0c6671; box-shadow: 0 0 0 3px rgba(12,102,113,0.18); } .ds-ic { width: 17px; height: 17px; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "신뢰도/중복 상태 알약. 항상 아이콘 + 텍스트, 색만으로 의미를 전하지 않음.",
+      "html": "<span class=\"ds-chip ds-chip-success\"><svg class=\"ds-ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 11.1V12a10 10 0 1 1-5.9-9.1\"/><path d=\"M22 4 12 14.01l-3-3\"/></svg>신뢰도 높음</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid; } .ds-chip-success { background: #e8f6f1; border-color: #bde3d5; color: #117457; } .ds-ic { width: 14px; height: 14px; }"
+    },
+    {
+      "name": "Contact Row Card",
+      "kind": "card",
+      "refersTo": "contact-card",
+      "description": "최근 연락처 한 행. 아바타 + 이름/회사 + 메타 + 편집/삭제 액션.",
+      "html": "<article class=\"ds-contact\"><span class=\"ds-avatar\">박</span><span class=\"ds-contact-main\"><strong>박지훈</strong><small>미래솔루션</small></span></article>",
+      "css": ".ds-contact { display: grid; grid-template-columns: 38px minmax(0,1fr) auto; align-items: center; gap: 10px; min-height: 58px; padding: 8px; background: #fff; border: 1px solid #dde6ee; border-radius: 8px; } .ds-avatar { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; background: #dff1f3; color: #0c6671; font-weight: 700; } .ds-contact-main { display: grid; min-width: 0; } .ds-contact-main strong { font-size: 14px; color: #17202a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-contact-main small { font-size: 12px; color: #566472; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "현장의 명함첩 (The Field Cardholder)",
+    "overview": "Card Leader는 책상이 아니라 모임 직후, 명함을 손에 쥔 그 순간을 위해 설계된 도구다. 인터페이스는 잘 만든 가죽 명함첩처럼 작동한다: 펼치면 바로 쓸 수 있고, 닫으면 안의 것이 안전하다는 확신을 준다. 차분한 흰 표면 위에 깊은 청록 하나가 작업의 무게중심을 잡고, 나머지는 사용자가 명함 한 장을 확실히 저장하도록 비켜선다. 복잡한 엔터프라이즈 도구, 차가운 다크 테크, 일반적인 SaaS 슬롭을 명시적으로 거부한다. 한 사람이 한 가지 일을 빠르고 확실하게 끝내는 단일 작업 앱이다.",
+    "keyCharacteristics": [
+      "흰 표면 + 깊은 청록 단일 강조. 색은 의미가 있을 때만 등장한다.",
+      "촉각적이고 단호한 컨트롤: 누르는 느낌과 상태 피드백이 분명하다.",
+      "은은한 주변광 입체감: 강조는 그림자가 아니라 색으로 한다.",
+      "폰 우선, WCAG AA 기준. 보이는 포커스와 충분한 터치 타깃이 기본값이다.",
+      "정직한 상태: 저장 완료는 확인됐을 때만 말한다."
+    ],
+    "rules": [
+      { "name": "단일 목소리 규칙 (The One Voice Rule)", "body": "깊은 청록은 한 화면에서 다음에 할 한 가지 행동에만 쓴다. 청록 버튼이 둘 이상 동등하게 경쟁하면 규칙 위반이다.", "section": "colors" },
+      { "name": "정직한 상태색 규칙 (The Honest Status Rule)", "body": "성공은 백엔드 확인 후에만, 경고는 중복·검토 필요일 때만, 오류는 실제 실패일 때만. 상태색으로 분위기를 내지 않는다.", "section": "colors" },
+      { "name": "무게 절약 규칙 (The Weight Discipline Rule)", "body": "weight 800/900은 라벨·버튼·상태 같은 짧고 기능적인 텍스트에만. 본문은 400을 유지한다.", "section": "typography" },
+      { "name": "색으로 강조, 그림자로 떠받침 규칙 (The Color-Lifts Rule)", "body": "그림자는 표면을 배경에서 떼어내는 데만. 강조는 청록 색·테두리·포커스 링으로 한다.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do 깊은 청록(#0c6671)을 화면당 단 하나의 1차 행동에만 쓴다.",
+      "Do 모든 인터랙티브 요소에 보이는 포커스 링을 둔다(box-shadow: 0 0 0 3px rgba(12,102,113,0.35)).",
+      "Do 보조 텍스트는 #566472 이상으로 어둡게 해 흰 표면에서 4.5:1을 넘긴다.",
+      "Do 모바일 터치 타깃을 최소 44x44px로 둔다.",
+      "Do 깊이는 넓고 옅은 주변광 그림자로만 표현한다.",
+      "Do 상태색은 실제 상태일 때만 쓴다. 저장 완료는 백엔드 확인 후에만."
+    ],
+    "donts": [
+      "Don't 복잡한 엔터프라이즈 도구처럼 메뉴·설정·위젯을 늘리지 않는다.",
+      "Don't 차가운 다크 테크 정서(이유 없는 다크모드, 네온, 터미널풍)를 들이지 않는다.",
+      "Don't 일반적인 SaaS 슬롭(그라디언트 텍스트, 글래스모피즘, 히어로 메트릭, 똑같은 카드 그리드)을 쓰지 않는다.",
+      "Don't 1px 넘는 색 사이드 스트라이프 보더를 강조로 쓰지 않는다.",
+      "Don't outline: none만 두고 포커스 표시를 비우지 않는다.",
+      "Don't weight 800/900을 쓰지 않는다. 무게는 400/600/700 세 단계, 본문은 400.",
+      "Don't Inter 등 AI 기본 폰트를 도입하지 않는다. OS 네이티브 스택을 쓴다.",
+      "Don't 파괴적 삭제에 네이티브 window.confirm을 쓰지 않는다.",
+      "Don't 카드 안에 카드를 중첩하지 않는다."
+    ]
+  }
+}
